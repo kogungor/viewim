@@ -73,16 +73,23 @@ end
 --- @param path string
 function M._preview_kitty(path)
   local launcher = vim.fn.executable("kitty") == 1 and "kitty" or "kitten"
+  local listen_on = os.getenv("KITTY_LISTEN_ON")
 
-  local cmd = {
-    launcher, "@", "launch",
+  local cmd = { launcher, "@" }
+  if listen_on and listen_on ~= "" then
+    vim.list_extend(cmd, { "--to", listen_on })
+  end
+
+  vim.list_extend(cmd, {
+    "launch",
     "--type=window",
     "--hold",
     "--",
     "kitten", "icat", path,
-  }
+  })
 
   vim.fn.jobstart(cmd, {
+    pty = true,
     on_stderr = function(_, data)
       local msg = table.concat(data, "\n")
       if msg ~= "" then
