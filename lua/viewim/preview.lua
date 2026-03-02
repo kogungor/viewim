@@ -41,9 +41,12 @@ end
 --- Open image in a new kitty OS window using kitten icat.
 --- @param path string
 function M._preview_kitty(path)
+  local launcher = vim.fn.executable("kitty") == 1 and "kitty" or "kitten"
+
   local cmd = {
-    "kitten", "@", "launch",
+    launcher, "@", "launch",
     "--type=window",
+    "--",
     "kitten", "icat", "--hold", path,
   }
 

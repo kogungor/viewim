@@ -126,7 +126,7 @@ Run `:checkhealth viewim` to verify:
 
 ## How It Works
 
-- **kitty** — runs `kitten @ launch --type=window kitten icat --hold <file>`
+- **kitty** — runs `kitty @ launch --type=window -- kitten icat --hold <file>`
   to open the image in a new kitty OS window.
 - **wezterm** — runs `wezterm cli split-pane -- wezterm imgcat <file>`
   to open the image in a new wezterm pane.

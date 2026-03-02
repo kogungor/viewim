@@ -22,10 +22,16 @@ function M.check()
 
   -- Check CLI tools
   if term == "kitty" then
+    if detect.has_command("kitty") then
+      vim.health.ok("'kitty' command found in $PATH")
+    else
+      vim.health.error("'kitty' command not found in $PATH (needed for launch)")
+    end
+
     if detect.has_command("kitten") then
       vim.health.ok("'kitten' command found in $PATH")
     else
-      vim.health.error("'kitten' command not found in $PATH (required for kitty)")
+      vim.health.error("'kitten' command not found in $PATH (required for icat)")
     end
   elseif term == "wezterm" then
     if detect.has_command("wezterm") then
