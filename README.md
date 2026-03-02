@@ -1,4 +1,4 @@
-# viewim
+# 🖼️ ViewIm: View Image
 
 Preview images directly from Neovim file explorers in your terminal.
 
@@ -7,7 +7,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - kitty / wezterm: opens image previews in a separate terminal window/pane
 - Ghostty: opens image previews in your OS native image viewer
 
-## Features
+## ✨ Features
 
 - Preview images from **nvim-tree**, **oil.nvim**, and **neo-tree**
 - Preview image files open in the **current buffer**
@@ -18,7 +18,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`
 - Safer execution path: argv-based process launching and control-character path rejection
 
-## Requirements
+## 🔐 Requirements
 
 - Neovim >= 0.9
 - One of:
@@ -30,7 +30,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
   - [oil.nvim](https://github.com/stevearc/oil.nvim)
   - [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim)
 
-### Kitty Setup (Required for kitty users)
+### 🐱 Kitty Setup (Required for kitty users)
 
 If you use kitty, remote control must be enabled and reachable from Neovim.
 
@@ -54,9 +54,9 @@ require("viewim").setup({
 
 Restart kitty after editing `kitty.conf`.
 
-## Installation
+## 📦 Installation
 
-### [lazy.nvim](https://github.com/folke/lazy.nvim)
+### 💤 [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 {
@@ -67,7 +67,7 @@ Restart kitty after editing `kitty.conf`.
 }
 ```
 
-### [packer.nvim](https://github.com/wbthomason/packer.nvim)
+### 🎒 [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
 use {
@@ -78,7 +78,7 @@ use {
 }
 ```
 
-### Manual
+### 🛠️ Manual
 
 Clone into your Neovim packages directory:
 
@@ -93,7 +93,7 @@ Then add to your config:
 require("viewim").setup()
 ```
 
-## Configuration
+## ⚙️ Configuration
 
 `setup()` accepts an optional table. All values below are defaults:
 
@@ -137,16 +137,16 @@ Notes:
 - Invalid `kitty.launch_type` falls back to `"os-window"` with a warning.
 - Unsupported `ghostty.mode` falls back to `"external"` with a warning.
 
-## Usage
+## 🚀 Usage
 
-### From a file explorer
+### 🌳 From a file explorer
 
 1. Open nvim-tree, oil.nvim, or neo-tree
 2. Navigate to an image file
 3. Press `<leader>p` (or your configured keymap)
 4. The image opens in a new terminal window/pane
 
-### From any buffer
+### 📄 From any buffer
 
 Run the command:
 
@@ -164,7 +164,7 @@ You can also pass an explicit path:
 
 If a path contains control characters (for example newline or NUL bytes), viewim rejects it before command execution.
 
-## Health Check
+## 🩺 Health Check
 
 Run `:checkhealth viewim` to verify:
 
@@ -176,7 +176,7 @@ Run `:checkhealth viewim` to verify:
 
 If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above.
 
-## How It Works
+## 🧠 How It Works
 
 - **kitty** — runs `kitty @ launch --type=os-window --cwd=current --hold -- kitty +kitten icat <file>`
   to open the image in a new kitty OS window.
@@ -187,7 +187,7 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
   - Linux: `xdg-open <file>`
   - Windows: `explorer.exe <file>`
 
-## Architecture
+## 🧩 Architecture
 
 `viewim` is split into small modules by responsibility:
 
@@ -209,6 +209,6 @@ Runtime flow:
 4. Terminal is detected.
 5. Matching runner executes the preview command.
 
-## License
+## 📜 License
 
 MIT
