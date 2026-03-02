@@ -16,6 +16,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - `:ViewImage` command with optional path argument
 - `:checkhealth viewim` to verify your setup
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`
+- Safer execution path: argv-based process launching and control-character path rejection
 
 ## Requirements
 
@@ -130,6 +131,12 @@ require("viewim").setup({
 | `ghostty.mode` | `string` | `"external"` | Ghostty preview mode (currently `external`) |
 | `ghostty.opener` | `string` | `"auto"` | External opener command (`auto`, `open`, `xdg-open`, or custom) |
 
+Notes:
+- `supported_extensions` entries are normalized to lowercase; both `"png"` and `".png"` are accepted.
+- Invalid extension entries are ignored with a warning.
+- Invalid `kitty.launch_type` falls back to `"os-window"` with a warning.
+- Unsupported `ghostty.mode` falls back to `"external"` with a warning.
+
 ## Usage
 
 ### From a file explorer
@@ -154,6 +161,8 @@ You can also pass an explicit path:
 ```
 :ViewImage /path/to/image.png
 ```
+
+If a path contains control characters (for example newline or NUL bytes), viewim rejects it before command execution.
 
 ## Health Check
 
