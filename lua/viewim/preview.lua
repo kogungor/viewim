@@ -78,24 +78,16 @@ function M._preview_kitty(path)
     return
   end
 
-  local listen_on = os.getenv("KITTY_LISTEN_ON")
-
-  local cmd = { launcher, "@" }
-  if listen_on and listen_on ~= "" then
-    vim.list_extend(cmd, { "--to", listen_on })
-  end
-
-  vim.list_extend(cmd, {
-    "launch",
-    "--type=os-window",
-    "--cwd=current",
+  local cmd = {
+    launcher,
+    "+kitten",
+    "icat",
     "--hold",
-    "--",
-    "kitten", "icat", path,
-  })
+    path,
+  }
 
   vim.fn.jobstart(cmd, {
-    pty = true,
+    detach = true,
     on_exit = function(_, code)
       if code ~= 0 then
         vim.schedule(function()
