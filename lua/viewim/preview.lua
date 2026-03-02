@@ -78,16 +78,26 @@ function M._preview_kitty(path)
     return
   end
 
-  local cmd = {
-    launcher,
-    "+kitten",
-    "icat",
+  local listen_on = os.getenv("KITTY_LISTEN_ON")
+
+  local cmd = { launcher, "@" }
+  if listen_on and listen_on ~= "" then
+    vim.list_extend(cmd, { "--to", listen_on })
+  end
+
+  vim.list_extend(cmd, {
+    "launch",
+    "--type=os-window",
+    "--cwd=current",
     "--hold",
+    "--",
+    "kitten",
+    "icat",
     path,
-  }
+  })
 
   vim.fn.jobstart(cmd, {
-    detach = true,
+    pty = true,
     on_exit = function(_, code)
       if code ~= 0 then
         vim.schedule(function()
@@ -95,9 +105,17 @@ function M._preview_kitty(path)
         end)
       end
     end,
+    on_stdout = function(_, data)
+      local msg = table.concat(data or {}, "\n")
+      if msg ~= "" and msg:match("%S") then
+        vim.schedule(function()
+          vim.notify("viewim: kitty output: " .. msg, vim.log.levels.WARN)
+        end)
+      end
+    end,
     on_stderr = function(_, data)
-      local msg = table.concat(data, "\n")
-      if msg ~= "" then
+      local msg = table.concat(data or {}, "\n")
+      if msg ~= "" and msg:match("%S") then
         vim.schedule(function()
           vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
         end)
