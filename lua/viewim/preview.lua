@@ -87,10 +87,11 @@ function M._preview_kitty(path)
 
   vim.list_extend(cmd, {
     "launch",
-    "--type=window",
+    "--type=os-window",
+    "--cwd=current",
     "--hold",
     "--",
-    "kitty", "+kitten", "icat", "--hold", path,
+    "kitten", "icat", path,
   })
 
   vim.fn.jobstart(cmd, {
