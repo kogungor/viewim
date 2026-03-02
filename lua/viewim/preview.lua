@@ -86,7 +86,6 @@ function M._preview_kitty(path)
   end
 
   vim.list_extend(cmd, {
-    "--no-response",
     "launch",
     "--type=os-window",
     "--cwd=current",
