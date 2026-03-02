@@ -1,0 +1,159 @@
+*viewim.txt*  Preview images from Neovim in kitty and wezterm
+
+Author:   anomalyco
+License:  MIT
+Homepage: https://github.com/anomalyco/viewim
+
+==============================================================================
+CONTENTS                                                     *viewim-contents*
+
+  1. Introduction .......................... |viewim-introduction|
+  2. Requirements .......................... |viewim-requirements|
+  3. Installation .......................... |viewim-installation|
+  4. Configuration ......................... |viewim-configuration|
+  5. Commands .............................. |viewim-commands|
+  6. Keymaps ............................... |viewim-keymaps|
+  7. Integrations .......................... |viewim-integrations|
+  8. Health Check .......................... |viewim-health|
+
+==============================================================================
+1. INTRODUCTION                                          *viewim-introduction*
+
+viewim is a Neovim plugin that lets you preview image files directly from
+file explorers (nvim-tree, oil.nvim, neo-tree) or from the current buffer.
+Images are opened in a separate terminal window or pane using your terminal's
+native image display capabilities.
+
+Supported terminals: kitty (via kitten icat) and wezterm (via wezterm imgcat).
+
+Supported image formats: bmp, jpg, jpeg, png, gif, webp.
+
+==============================================================================
+2. REQUIREMENTS                                          *viewim-requirements*
+
+- Neovim >= 0.9
+- One of the following terminal emulators:
+  - kitty (https://sw.kovidgoyal.net/kitty/)
+  - wezterm (https://wezfurlong.org/wezterm/)
+- At least one file explorer (optional):
+  - nvim-tree.lua
+  - oil.nvim
+  - neo-tree.nvim
+
+==============================================================================
+3. INSTALLATION                                          *viewim-installation*
+
+Using lazy.nvim: >lua
+  {
+    "anomalyco/viewim",
+    config = function()
+      require("viewim").setup()
+    end,
+  }
+<
+
+Using packer.nvim: >lua
+  use {
+    "anomalyco/viewim",
+    config = function()
+      require("viewim").setup()
+    end,
+  }
+<
+
+Manual: ~
+  Clone into your Neovim packages directory: >sh
+  git clone https://github.com/anomalyco/viewim.git \
+    ~/.local/share/nvim/site/pack/plugins/start/viewim
+<
+  Then add to your config: >lua
+  require("viewim").setup()
+<
+
+==============================================================================
+4. CONFIGURATION                                        *viewim-configuration*
+
+Call `setup()` with an optional table. All values shown are defaults: >lua
+
+  require("viewim").setup({
+    keymap = "<leader>p",
+    supported_extensions = {
+      ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    },
+    integrations = {
+      nvim_tree = true,
+      oil = true,
+      neo_tree = true,
+    },
+  })
+<
+
+Options: ~
+
+  `keymap`                                               *viewim-config-keymap*
+    Type: string
+    Default: `"<leader>p"`
+    Keymap to trigger image preview in file explorer buffers.
+
+  `supported_extensions`                          *viewim-config-extensions*
+    Type: table (list of strings)
+    Default: `{ ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp" }`
+    List of file extensions recognized as images.
+
+  `integrations`                                  *viewim-config-integrations*
+    Type: table
+    Default: `{ nvim_tree = true, oil = true, neo_tree = true }`
+    Enable or disable keymaps for specific file explorers.
+
+==============================================================================
+5. COMMANDS                                                *viewim-commands*
+
+                                                               *:ViewImage*
+:ViewImage [path]       Preview an image file.
+                        If [path] is given, preview that file.
+                        If omitted, detect context:
+                        - In nvim-tree: preview file under cursor
+                        - In oil.nvim: preview file under cursor
+                        - In neo-tree: preview file under cursor
+                        - Otherwise: preview current buffer file
+
+==============================================================================
+6. KEYMAPS                                                  *viewim-keymaps*
+
+By default, `<leader>p` is mapped in file explorer buffers (NvimTree, oil,
+neo-tree). This can be changed via the `keymap` option in |viewim-configuration|.
+
+The keymap is buffer-local and only active in supported file explorer buffers.
+
+==============================================================================
+7. INTEGRATIONS                                          *viewim-integrations*
+
+nvim-tree ~
+  Uses `nvim-tree.api` to get the node under cursor. The deprecated
+  `nvim-tree.lib` module is NOT used.
+
+oil.nvim ~
+  Uses `oil.get_cursor_entry()` and `oil.get_current_dir()` to resolve
+  the full path of the file under cursor.
+
+neo-tree ~
+  Uses `neo-tree.sources.manager` to access the filesystem state and
+  get the selected node's path.
+
+buffer ~
+  Falls back to `vim.api.nvim_buf_get_name(0)` to get the current
+  buffer's file path. Works when you open an image file directly.
+
+==============================================================================
+8. HEALTH CHECK                                              *viewim-health*
+
+Run `:checkhealth viewim` to verify your setup.
+
+Checks performed:
+- Neovim version >= 0.9
+- Terminal emulator detected (kitty / wezterm)
+- CLI tools available (`kitten` for kitty, `wezterm` for wezterm)
+- Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
