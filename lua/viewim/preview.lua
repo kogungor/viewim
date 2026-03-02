@@ -3,6 +3,35 @@ local detect = require("viewim.detect")
 
 local M = {}
 
+local function is_abs_path(path)
+  return path:sub(1, 1) == "/"
+    or path:match("^%a:[/\\]") ~= nil
+    or path:sub(1, 2) == "\\\\"
+end
+
+--- Resolve a path into an absolute local path.
+--- For relative paths, prefer the current buffer's directory when possible.
+--- @param path string
+--- @return string
+local function resolve_path(path)
+  path = vim.fn.expand(path)
+
+  if is_abs_path(path) then
+    return vim.fn.fnamemodify(path, ":p")
+  end
+
+  local bufname = vim.api.nvim_buf_get_name(0)
+  if bufname ~= "" then
+    local bufdir = vim.fn.fnamemodify(bufname, ":p:h")
+    local from_buf = vim.fs.normalize(bufdir .. "/" .. path)
+    if vim.fn.filereadable(from_buf) == 1 then
+      return from_buf
+    end
+  end
+
+  return vim.fn.fnamemodify(path, ":p")
+end
+
 --- Preview an image file in the terminal.
 --- @param path string absolute path to the image file
 function M.preview(path)
@@ -11,8 +40,7 @@ function M.preview(path)
     return
   end
 
-  -- Resolve to absolute path
-  path = vim.fn.fnamemodify(path, ":p")
+  path = resolve_path(path)
 
   if not config.is_image(path) then
     vim.notify("viewim: not a supported image: " .. path, vim.log.levels.WARN)
@@ -20,7 +48,10 @@ function M.preview(path)
   end
 
   if vim.fn.filereadable(path) ~= 1 then
-    vim.notify("viewim: file not readable: " .. path, vim.log.levels.ERROR)
+    vim.notify(
+      "viewim: file not readable: " .. path .. " (cwd: " .. vim.fn.getcwd() .. ")",
+      vim.log.levels.ERROR
+    )
     return
   end
 
@@ -46,8 +77,9 @@ function M._preview_kitty(path)
   local cmd = {
     launcher, "@", "launch",
     "--type=window",
+    "--hold",
     "--",
-    "kitten", "icat", "--hold", path,
+    "kitten", "icat", path,
   }
 
   vim.fn.jobstart(cmd, {
