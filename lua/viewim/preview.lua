@@ -46,9 +46,24 @@ local function join_nonempty(lines)
   return table.concat(acc, "\n")
 end
 
+local function unix_socket_path(addr)
+  if type(addr) ~= "string" then
+    return nil
+  end
+  return addr:match("^unix:(.+)$")
+end
+
+local function socket_is_available(addr)
+  local path = unix_socket_path(addr)
+  if not path then
+    return true
+  end
+  return vim.fn.getftype(path) == "socket"
+end
+
 local function shell_launch_kitty(path, listen_on)
   local parts = { "kitty", "@" }
-  if listen_on and listen_on ~= "" then
+  if listen_on and listen_on ~= "" and socket_is_available(listen_on) then
     table.insert(parts, "--to")
     table.insert(parts, vim.fn.shellescape(listen_on))
   end
@@ -137,10 +152,16 @@ function M._preview_kitty(path)
   local kitty_opts = (config.options and config.options.kitty) or {}
   local listen_on = kitty_opts.listen_on or os.getenv("KITTY_LISTEN_ON")
   local launch_type = kitty_opts.launch_type or "os-window"
+  local can_use_socket = listen_on and listen_on ~= "" and socket_is_available(listen_on)
 
   local cmd = { "kitty", "@" }
-  if listen_on and listen_on ~= "" then
+  if can_use_socket then
     vim.list_extend(cmd, { "--to", listen_on })
+  elseif listen_on and listen_on ~= "" then
+    vim.notify(
+      "viewim: kitty socket not found, retrying without --to: " .. listen_on,
+      vim.log.levels.WARN
+    )
   end
 
   vim.list_extend(cmd, {

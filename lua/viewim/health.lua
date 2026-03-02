@@ -37,7 +37,16 @@ function M.check()
     local cfg = require("viewim.config").options
     local listen_on = (cfg.kitty and cfg.kitty.listen_on) or os.getenv("KITTY_LISTEN_ON")
     if listen_on and listen_on ~= "" then
-      vim.health.ok("kitty remote socket available")
+      local sock_path = listen_on:match("^unix:(.+)$")
+      if sock_path then
+        if vim.fn.getftype(sock_path) == "socket" then
+          vim.health.ok("kitty remote socket available")
+        else
+          vim.health.warn("kitty listen_on set but socket is missing: " .. sock_path)
+        end
+      else
+        vim.health.ok("kitty remote endpoint configured")
+      end
     else
       vim.health.warn("KITTY_LISTEN_ON is empty (set kitty.listen_on or kitty listen_on config)")
     end
