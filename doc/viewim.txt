@@ -14,8 +14,9 @@ CONTENTS                                                     *viewim-contents*
   5. Commands .............................. |viewim-commands|
   6. Keymaps ............................... |viewim-keymaps|
   7. Integrations .......................... |viewim-integrations|
-  8. Health Check .......................... |viewim-health|
-  9. Troubleshooting ....................... |viewim-troubleshooting|
+  8. Architecture .......................... |viewim-architecture|
+  9. Health Check .......................... |viewim-health|
+ 10. Troubleshooting ....................... |viewim-troubleshooting|
 
 ==============================================================================
 1. INTRODUCTION                                          *viewim-introduction*
@@ -199,7 +200,29 @@ buffer ~
   buffer's file path. Works when you open an image file directly.
 
 ==============================================================================
-8. HEALTH CHECK                                              *viewim-health*
+8. ARCHITECTURE                                    *viewim-architecture*
+
+viewim is organized by responsibility:
+
+- `plugin/viewim.lua`: registers `:ViewImage`
+- `lua/viewim/init.lua`: public API and keymap wiring
+- `lua/viewim/config.lua`: defaults + normalized/validated config
+- `lua/viewim/path.lua`: path resolution and control-character checks
+- `lua/viewim/preview.lua`: orchestrator (`validate -> detect -> dispatch`)
+- `lua/viewim/detect.lua`: terminal/platform detection helpers
+- `lua/viewim/runners/*.lua`: terminal-specific launch logic
+- `lua/viewim/integrations/*.lua`: explorer/buffer path adapters
+- `lua/viewim/health.lua`: `:checkhealth viewim`
+
+Runtime flow: ~
+  1. User triggers `:ViewImage` or integration keymap.
+  2. Integration resolves a candidate file path.
+  3. `preview.lua` validates and normalizes the path.
+  4. Terminal is detected (kitty/wezterm/ghostty).
+  5. Matching runner executes the preview command.
+
+==============================================================================
+9. HEALTH CHECK                                              *viewim-health*
 
 Run `:checkhealth viewim` to verify your setup.
 
@@ -212,7 +235,7 @@ Checks performed:
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)
 
 ============================================================================== 
-9. TROUBLESHOOTING                              *viewim-troubleshooting*
+10. TROUBLESHOOTING                             *viewim-troubleshooting*
 
 No preview appears in kitty: ~
   1. Run `:checkhealth viewim`.

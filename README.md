@@ -187,6 +187,28 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
   - Linux: `xdg-open <file>`
   - Windows: `explorer.exe <file>`
 
+## Architecture
+
+`viewim` is split into small modules by responsibility:
+
+- `plugin/viewim.lua` — registers `:ViewImage`
+- `lua/viewim/init.lua` — public API (`setup`, `view`) and integration keymaps
+- `lua/viewim/config.lua` — defaults, merge, and config normalization/validation
+- `lua/viewim/path.lua` — path resolution and control-character checks
+- `lua/viewim/preview.lua` — orchestration (`validate -> detect terminal -> dispatch`)
+- `lua/viewim/detect.lua` — terminal/platform/command detection helpers
+- `lua/viewim/runners/{kitty,wezterm,ghostty}.lua` — terminal-specific command runners
+- `lua/viewim/integrations/{nvim_tree,oil,neo_tree,buffer}.lua` — file explorer adapters
+- `lua/viewim/health.lua` — `:checkhealth viewim` diagnostics
+
+Runtime flow:
+
+1. User runs `:ViewImage` or presses the integration keymap.
+2. Integration resolves a candidate file path.
+3. `preview.lua` validates/sanitizes the path.
+4. Terminal is detected.
+5. Matching runner executes the preview command.
+
 ## License
 
 MIT
