@@ -96,32 +96,14 @@ function M._preview_kitty(path)
     path,
   })
 
-  vim.fn.jobstart(cmd, {
-    pty = true,
-    on_exit = function(_, code)
-      if code ~= 0 then
-        vim.schedule(function()
-          vim.notify("viewim: kitty launch exited with code " .. code, vim.log.levels.ERROR)
-        end)
-      end
-    end,
-    on_stdout = function(_, data)
-      local msg = table.concat(data or {}, "\n")
-      if msg ~= "" and msg:match("%S") then
-        vim.schedule(function()
-          vim.notify("viewim: kitty output: " .. msg, vim.log.levels.WARN)
-        end)
-      end
-    end,
-    on_stderr = function(_, data)
-      local msg = table.concat(data or {}, "\n")
-      if msg ~= "" and msg:match("%S") then
-        vim.schedule(function()
-          vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
-        end)
-      end
-    end,
-  })
+  local out = vim.fn.system(cmd)
+  if vim.v.shell_error ~= 0 then
+    local msg = (out or ""):gsub("^%s+", ""):gsub("%s+$", "")
+    if msg == "" then
+      msg = "command failed with exit code " .. vim.v.shell_error
+    end
+    vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
+  end
 end
 
 --- Open image in a new wezterm pane.
