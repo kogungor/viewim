@@ -25,7 +25,10 @@ file explorers (nvim-tree, oil.nvim, neo-tree) or from the current buffer.
 Images are opened in a separate terminal window or pane using your terminal's
 native image display capabilities.
 
-Supported terminals: kitty (via kitten icat) and wezterm (via wezterm imgcat).
+Supported terminals:
+- kitty (via kitten icat)
+- wezterm (via wezterm imgcat)
+- Ghostty (via OS native external opener)
 
 Supported image formats: bmp, jpg, jpeg, png, gif, webp.
 
@@ -36,6 +39,7 @@ Supported image formats: bmp, jpg, jpeg, png, gif, webp.
 - One of the following terminal emulators:
   - kitty (https://sw.kovidgoyal.net/kitty/)
   - wezterm (https://wezfurlong.org/wezterm/)
+  - Ghostty (https://ghostty.org/) (uses OS native external opener)
 - At least one file explorer (optional):
   - nvim-tree.lua
   - oil.nvim
@@ -106,6 +110,10 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       listen_on = nil,
       launch_type = "os-window",
     },
+    ghostty = {
+      mode = "external",
+      opener = "auto",
+    },
   })
 <
 
@@ -135,6 +143,17 @@ Options: ~
     Type: string
     Default: `"os-window"`
     Launch target for kitty previews (`os-window`, `tab`, `window`).
+
+  `ghostty.mode`                                  *viewim-config-ghostty-mode*
+    Type: string
+    Default: `"external"`
+    Ghostty preview mode. Currently only `external` is supported.
+
+  `ghostty.opener`                              *viewim-config-ghostty-opener*
+    Type: string
+    Default: `"auto"`
+    External opener command for Ghostty. `auto` uses native opener:
+    macOS `open`, Linux `xdg-open`, Windows `cmd.exe /c start`.
 
 ==============================================================================
 5. COMMANDS                                                *viewim-commands*
@@ -182,9 +201,10 @@ Run `:checkhealth viewim` to verify your setup.
 
 Checks performed:
 - Neovim version >= 0.9
-- Terminal emulator detected (kitty / wezterm)
+- Terminal emulator detected (kitty / wezterm / ghostty)
 - CLI tools available (`kitten` for kitty, `wezterm` for wezterm)
 - Kitty remote socket available (for kitty)
+- Native opener available (for ghostty)
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)
 
 ============================================================================== 
@@ -203,6 +223,14 @@ No preview appears in kitty: ~
 
 `not a supported image`: ~
   Pass a full filename with extension (for example `.png`, `.jpg`, `.webp`).
+
+No preview appears in Ghostty: ~
+  1. Run `:checkhealth viewim`.
+  2. Ensure native opener exists on your platform:
+       macOS: `open`
+       Linux: `xdg-open`
+       Windows: `cmd.exe`
+  3. Or set `ghostty.opener` explicitly in setup.
 
 Relative path not found: ~
   Use an absolute path in `:ViewImage /full/path/to/file.png`.

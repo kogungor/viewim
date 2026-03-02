@@ -19,6 +19,10 @@ M.defaults = {
     listen_on = nil,
     launch_type = "os-window",
   },
+  ghostty = {
+    mode = "external",
+    opener = "auto",
+  },
 }
 
 M.options = {}

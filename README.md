@@ -2,14 +2,16 @@
 
 Preview images directly from Neovim file explorers in your terminal.
 
-Works with **kitty** and **wezterm** — opens image previews in a separate terminal
-window/pane without leaving your editor.
+Works with **kitty**, **wezterm**, and **Ghostty**.
+
+- kitty / wezterm: opens image previews in a separate terminal window/pane
+- Ghostty: opens image previews in your OS native image viewer
 
 ## Features
 
 - Preview images from **nvim-tree**, **oil.nvim**, and **neo-tree**
 - Preview image files open in the **current buffer**
-- Terminal auto-detection (kitty / wezterm)
+- Terminal auto-detection (kitty / wezterm / ghostty)
 - Configurable keymap
 - `:ViewImage` command with optional path argument
 - `:checkhealth viewim` to verify your setup
@@ -21,6 +23,7 @@ window/pane without leaving your editor.
 - One of:
   - [kitty](https://sw.kovidgoyal.net/kitty/) terminal (uses `kitten icat`)
   - [wezterm](https://wezfurlong.org/wezterm/) terminal (uses `wezterm imgcat`)
+  - [Ghostty](https://ghostty.org/) terminal (opens images in your OS native viewer)
 - At least one file explorer (optional):
   - [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua)
   - [oil.nvim](https://github.com/stevearc/oil.nvim)
@@ -108,6 +111,10 @@ require("viewim").setup({
     listen_on = nil,
     launch_type = "os-window",
   },
+  ghostty = {
+    mode = "external",
+    opener = "auto",
+  },
 })
 ```
 
@@ -120,6 +127,8 @@ require("viewim").setup({
 | `integrations.neo_tree` | `bool` | `true` | Enable neo-tree keymap |
 | `kitty.listen_on` | `string\|nil` | `nil` | Kitty remote socket (fallback to `$KITTY_LISTEN_ON`) |
 | `kitty.launch_type` | `string` | `"os-window"` | Kitty launch target (`os-window`, `tab`, `window`) |
+| `ghostty.mode` | `string` | `"external"` | Ghostty preview mode (currently `external`) |
+| `ghostty.opener` | `string` | `"auto"` | External opener command (`auto`, `open`, `xdg-open`, or custom) |
 
 ## Usage
 
@@ -153,6 +162,7 @@ Run `:checkhealth viewim` to verify:
 - Terminal emulator detected
 - CLI tools (`kitten` / `wezterm`) available in `$PATH`
 - Kitty remote socket available (for kitty)
+- Native opener available (for ghostty)
 - Optional integrations loadable
 
 If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above.
@@ -163,6 +173,10 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
   to open the image in a new kitty OS window.
 - **wezterm** — runs `wezterm cli split-pane -- wezterm imgcat <file>`
   to open the image in a new wezterm pane.
+- **ghostty** — opens the image with your OS native viewer:
+  - macOS: `open <file>`
+  - Linux: `xdg-open <file>`
+  - Windows: `cmd.exe /c start "" <file>`
 
 ## License
 

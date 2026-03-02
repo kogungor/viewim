@@ -17,7 +17,7 @@ function M.check()
   if term then
     vim.health.ok("Terminal detected: " .. term)
   else
-    vim.health.warn("No supported terminal detected (need kitty or wezterm)")
+    vim.health.warn("No supported terminal detected (need kitty, wezterm, or ghostty)")
   end
 
   -- Check CLI tools
@@ -46,6 +46,25 @@ function M.check()
       vim.health.ok("'wezterm' command found in $PATH")
     else
       vim.health.error("'wezterm' command not found in $PATH")
+    end
+  elseif term == "ghostty" then
+    local cfg = require("viewim.config").options
+    local ghostty = cfg.ghostty or {}
+    local opener = ghostty.opener or "auto"
+
+    if opener == "auto" then
+      local native = detect.get_native_opener()
+      if native and detect.has_command(native) then
+        vim.health.ok("native opener found: " .. native)
+      elseif native then
+        vim.health.error("native opener not found: " .. native)
+      else
+        vim.health.error("could not determine native opener for this platform")
+      end
+    elseif detect.has_command(opener) then
+      vim.health.ok("ghostty opener found: " .. opener)
+    else
+      vim.health.error("ghostty opener not found: " .. opener)
     end
   end
 

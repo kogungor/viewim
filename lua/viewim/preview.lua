@@ -70,6 +70,23 @@ local function shell_launch_kitty(path, listen_on)
   vim.cmd("redraw!")
 end
 
+local function build_external_open_cmd(path, opener)
+  if opener and opener ~= "auto" then
+    return { opener, path }
+  end
+
+  local platform = detect.get_platform()
+  if platform == "macos" then
+    return { "open", path }
+  elseif platform == "linux" then
+    return { "xdg-open", path }
+  elseif platform == "windows" then
+    return { "cmd.exe", "/c", "start", "", path }
+  end
+
+  return nil
+end
+
 --- Preview an image file in the terminal.
 --- @param path string absolute path to the image file
 function M.preview(path)
@@ -99,9 +116,11 @@ function M.preview(path)
     M._preview_kitty(path)
   elseif term == "wezterm" then
     M._preview_wezterm(path)
+  elseif term == "ghostty" then
+    M._preview_ghostty(path)
   else
     vim.notify(
-      "viewim: unsupported terminal. Requires kitty or wezterm.",
+      "viewim: unsupported terminal. Requires kitty, wezterm, or ghostty.",
       vim.log.levels.ERROR
     )
   end
@@ -189,6 +208,48 @@ function M._preview_wezterm(path)
       if msg ~= "" then
         vim.schedule(function()
           vim.notify("viewim: wezterm error: " .. msg, vim.log.levels.ERROR)
+        end)
+      end
+    end,
+  })
+end
+
+--- Open image via native external app (used for ghostty).
+--- @param path string
+function M._preview_ghostty(path)
+  local ghostty_opts = (config.options and config.options.ghostty) or {}
+  local mode = ghostty_opts.mode or "external"
+
+  if mode ~= "external" then
+    vim.notify("viewim: ghostty mode must be 'external'", vim.log.levels.ERROR)
+    return
+  end
+
+  local opener = ghostty_opts.opener or "auto"
+  local cmd = build_external_open_cmd(path, opener)
+  if not cmd or #cmd == 0 then
+    vim.notify("viewim: could not determine external opener for this platform", vim.log.levels.ERROR)
+    return
+  end
+
+  if opener == "auto" then
+    local native = cmd[1]
+    if vim.fn.executable(native) ~= 1 then
+      vim.notify("viewim: native opener not found: " .. native, vim.log.levels.ERROR)
+      return
+    end
+  elseif vim.fn.executable(cmd[1]) ~= 1 then
+    vim.notify("viewim: opener not found: " .. cmd[1], vim.log.levels.ERROR)
+    return
+  end
+
+  vim.fn.jobstart(cmd, {
+    detach = true,
+    on_stderr = function(_, data)
+      local msg = join_nonempty(data)
+      if msg ~= "" then
+        vim.schedule(function()
+          vim.notify("viewim: ghostty opener error: " .. msg, vim.log.levels.ERROR)
         end)
       end
     end,
