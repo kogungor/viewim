@@ -26,6 +26,30 @@ window/pane without leaving your editor.
   - [oil.nvim](https://github.com/stevearc/oil.nvim)
   - [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim)
 
+### Kitty Setup (Required for kitty users)
+
+If you use kitty, remote control must be enabled and reachable from Neovim.
+
+Add this to your `kitty.conf` (usually `~/.config/kitty/kitty.conf`):
+
+```conf
+allow_remote_control yes
+listen_on unix:/tmp/kitty-viewim.sock
+```
+
+Then configure viewim with the same socket:
+
+```lua
+require("viewim").setup({
+  kitty = {
+    listen_on = "unix:/tmp/kitty-viewim.sock",
+    launch_type = "tab", -- recommended for first setup/debug
+  },
+})
+```
+
+Restart kitty after editing `kitty.conf`.
+
 ## Installation
 
 ### [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -128,7 +152,10 @@ Run `:checkhealth viewim` to verify:
 
 - Terminal emulator detected
 - CLI tools (`kitten` / `wezterm`) available in `$PATH`
+- Kitty remote socket available (for kitty)
 - Optional integrations loadable
+
+If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above.
 
 ## How It Works
 

@@ -15,6 +15,7 @@ CONTENTS                                                     *viewim-contents*
   6. Keymaps ............................... |viewim-keymaps|
   7. Integrations .......................... |viewim-integrations|
   8. Health Check .......................... |viewim-health|
+  9. Troubleshooting ....................... |viewim-troubleshooting|
 
 ==============================================================================
 1. INTRODUCTION                                          *viewim-introduction*
@@ -69,6 +70,22 @@ Manual: ~
   Then add to your config: >lua
   require("viewim").setup()
 <
+
+Kitty users (required): ~
+  To let viewim control kitty from Neovim, enable remote control and a socket
+  in your kitty config (`~/.config/kitty/kitty.conf`): >conf
+  allow_remote_control yes
+  listen_on unix:/tmp/kitty-viewim.sock
+<
+  Then set the same socket in viewim: >lua
+  require("viewim").setup({
+    kitty = {
+      listen_on = "unix:/tmp/kitty-viewim.sock",
+      launch_type = "tab", -- recommended for first setup/debug
+    },
+  })
+<
+  Restart kitty after changing kitty.conf.
 
 ==============================================================================
 4. CONFIGURATION                                        *viewim-configuration*
@@ -167,7 +184,28 @@ Checks performed:
 - Neovim version >= 0.9
 - Terminal emulator detected (kitty / wezterm)
 - CLI tools available (`kitten` for kitty, `wezterm` for wezterm)
+- Kitty remote socket available (for kitty)
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)
 
-==============================================================================
+============================================================================== 
+9. TROUBLESHOOTING                              *viewim-troubleshooting*
+
+No preview appears in kitty: ~
+  1. Run `:checkhealth viewim`.
+  2. Ensure kitty remote control is enabled in `kitty.conf`:
+       allow_remote_control yes
+       listen_on unix:/tmp/kitty-viewim.sock
+  3. Ensure setup uses the same socket via `kitty.listen_on`.
+  4. Try `kitty.launch_type = "tab"` first, then switch to `"os-window"`.
+
+`KITTY_LISTEN_ON` is empty: ~
+  Set `kitty.listen_on` explicitly in `require("viewim").setup({...})`.
+
+`not a supported image`: ~
+  Pass a full filename with extension (for example `.png`, `.jpg`, `.webp`).
+
+Relative path not found: ~
+  Use an absolute path in `:ViewImage /full/path/to/file.png`.
+
+============================================================================== 
  vim:tw=78:ts=8:ft=help:norl:
