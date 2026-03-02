@@ -83,7 +83,6 @@ function M._preview_kitty(path)
   }
 
   vim.fn.jobstart(cmd, {
-    detach = true,
     on_stderr = function(_, data)
       local msg = table.concat(data, "\n")
       if msg ~= "" then
@@ -104,7 +103,6 @@ function M._preview_wezterm(path)
   }
 
   vim.fn.jobstart(cmd, {
-    detach = true,
     on_stderr = function(_, data)
       local msg = table.concat(data, "\n")
       if msg ~= "" then
