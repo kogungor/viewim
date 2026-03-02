@@ -1,8 +1,8 @@
 *viewim.txt*  Preview images from Neovim in kitty and wezterm
 
-Author:   anomalyco
+Author:   kogungor
 License:  MIT
-Homepage: https://github.com/anomalyco/viewim
+Homepage: https://github.com/kogungor/viewim
 
 ==============================================================================
 CONTENTS                                                     *viewim-contents*
@@ -45,7 +45,7 @@ Supported image formats: bmp, jpg, jpeg, png, gif, webp.
 
 Using lazy.nvim: >lua
   {
-    "anomalyco/viewim",
+    "kogungor/viewim",
     config = function()
       require("viewim").setup()
     end,
@@ -54,7 +54,7 @@ Using lazy.nvim: >lua
 
 Using packer.nvim: >lua
   use {
-    "anomalyco/viewim",
+    "kogungor/viewim",
     config = function()
       require("viewim").setup()
     end,
@@ -63,7 +63,7 @@ Using packer.nvim: >lua
 
 Manual: ~
   Clone into your Neovim packages directory: >sh
-  git clone https://github.com/anomalyco/viewim.git \
+  git clone https://github.com/kogungor/viewim.git \
     ~/.local/share/nvim/site/pack/plugins/start/viewim
 <
   Then add to your config: >lua

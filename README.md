@@ -32,7 +32,7 @@ window/pane without leaving your editor.
 
 ```lua
 {
-  "anomalyco/viewim",
+  "kogungor/viewim",
   config = function()
     require("viewim").setup()
   end,
@@ -43,7 +43,7 @@ window/pane without leaving your editor.
 
 ```lua
 use {
-  "anomalyco/viewim",
+  "kogungor/viewim",
   config = function()
     require("viewim").setup()
   end,
@@ -55,7 +55,7 @@ use {
 Clone into your Neovim packages directory:
 
 ```sh
-git clone https://github.com/anomalyco/viewim.git \
+git clone https://github.com/kogungor/viewim.git \
   ~/.local/share/nvim/site/pack/plugins/start/viewim
 ```
 
