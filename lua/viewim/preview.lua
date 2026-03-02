@@ -72,7 +72,12 @@ end
 --- Open image in a new kitty OS window using kitten icat.
 --- @param path string
 function M._preview_kitty(path)
-  local launcher = vim.fn.executable("kitty") == 1 and "kitty" or "kitten"
+  local launcher = "kitty"
+  if vim.fn.executable(launcher) ~= 1 then
+    vim.notify("viewim: 'kitty' command not found in $PATH", vim.log.levels.ERROR)
+    return
+  end
+
   local listen_on = os.getenv("KITTY_LISTEN_ON")
 
   local cmd = { launcher, "@" }
@@ -85,11 +90,18 @@ function M._preview_kitty(path)
     "--type=window",
     "--hold",
     "--",
-    "kitten", "icat", path,
+    "kitty", "+kitten", "icat", "--hold", path,
   })
 
   vim.fn.jobstart(cmd, {
     pty = true,
+    on_exit = function(_, code)
+      if code ~= 0 then
+        vim.schedule(function()
+          vim.notify("viewim: kitty launch exited with code " .. code, vim.log.levels.ERROR)
+        end)
+      end
+    end,
     on_stderr = function(_, data)
       local msg = table.concat(data, "\n")
       if msg ~= "" then
