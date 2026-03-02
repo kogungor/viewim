@@ -138,16 +138,10 @@ function M._preview_kitty(path)
   local listen_on = kitty_opts.listen_on or os.getenv("KITTY_LISTEN_ON")
   local launch_type = kitty_opts.launch_type or "os-window"
 
-  if not listen_on or listen_on == "" then
-    vim.notify(
-      "viewim: KITTY_LISTEN_ON is empty. Set kitty.listen_on in setup() or configure kitty listen_on.",
-      vim.log.levels.ERROR
-    )
-    return
-  end
-
   local cmd = { "kitty", "@" }
-  vim.list_extend(cmd, { "--to", listen_on })
+  if listen_on and listen_on ~= "" then
+    vim.list_extend(cmd, { "--to", listen_on })
+  end
 
   vim.list_extend(cmd, {
     "launch",
@@ -174,6 +168,21 @@ function M._preview_kitty(path)
       local stderr_lower = stderr_msg:lower()
       local tty_issue = stderr_lower:find("/dev/tty", 1, true)
         or stderr_lower:find("controlling terminal", 1, true)
+      local socket_missing = stderr_lower:find("failed to connect", 1, true)
+        and stderr_lower:find("no such file or directory", 1, true)
+
+      if socket_missing then
+        local env_listen = os.getenv("KITTY_LISTEN_ON")
+        local retry_listen = nil
+        if env_listen and env_listen ~= "" and env_listen ~= listen_on then
+          retry_listen = env_listen
+        end
+
+        vim.schedule(function()
+          shell_launch_kitty(path, retry_listen)
+        end)
+        return
+      end
 
       if tty_issue then
         vim.schedule(function()
