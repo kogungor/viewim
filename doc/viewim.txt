@@ -85,6 +85,10 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       oil = true,
       neo_tree = true,
     },
+    kitty = {
+      listen_on = nil,
+      launch_type = "os-window",
+    },
   })
 <
 
@@ -104,6 +108,16 @@ Options: ~
     Type: table
     Default: `{ nvim_tree = true, oil = true, neo_tree = true }`
     Enable or disable keymaps for specific file explorers.
+
+  `kitty.listen_on`                                  *viewim-config-kitty-sock*
+    Type: string|nil
+    Default: `nil` (falls back to `$KITTY_LISTEN_ON`)
+    Kitty remote socket used for `kitty @` commands.
+
+  `kitty.launch_type`                                *viewim-config-kitty-type*
+    Type: string
+    Default: `"os-window"`
+    Launch target for kitty previews (`os-window`, `tab`, `window`).
 
 ==============================================================================
 5. COMMANDS                                                *viewim-commands*

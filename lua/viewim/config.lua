@@ -15,6 +15,10 @@ M.defaults = {
     oil = true,
     neo_tree = true,
   },
+  kitty = {
+    listen_on = nil,
+    launch_type = "os-window",
+  },
 }
 
 M.options = {}

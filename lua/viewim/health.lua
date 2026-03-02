@@ -33,6 +33,14 @@ function M.check()
     else
       vim.health.error("'kitten' command not found in $PATH (required for icat)")
     end
+
+    local cfg = require("viewim.config").options
+    local listen_on = (cfg.kitty and cfg.kitty.listen_on) or os.getenv("KITTY_LISTEN_ON")
+    if listen_on and listen_on ~= "" then
+      vim.health.ok("kitty remote socket available")
+    else
+      vim.health.warn("KITTY_LISTEN_ON is empty (set kitty.listen_on or kitty listen_on config)")
+    end
   elseif term == "wezterm" then
     if detect.has_command("wezterm") then
       vim.health.ok("'wezterm' command found in $PATH")

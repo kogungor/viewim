@@ -115,15 +115,24 @@ function M._preview_kitty(path)
     return
   end
 
-  local listen_on = os.getenv("KITTY_LISTEN_ON")
-  local cmd = { "kitty", "@" }
-  if listen_on and listen_on ~= "" then
-    vim.list_extend(cmd, { "--to", listen_on })
+  local kitty_opts = (config.options and config.options.kitty) or {}
+  local listen_on = kitty_opts.listen_on or os.getenv("KITTY_LISTEN_ON")
+  local launch_type = kitty_opts.launch_type or "os-window"
+
+  if not listen_on or listen_on == "" then
+    vim.notify(
+      "viewim: KITTY_LISTEN_ON is empty. Set kitty.listen_on in setup() or configure kitty listen_on.",
+      vim.log.levels.ERROR
+    )
+    return
   end
+
+  local cmd = { "kitty", "@" }
+  vim.list_extend(cmd, { "--to", listen_on })
 
   vim.list_extend(cmd, {
     "launch",
-    "--type=os-window",
+    "--type=" .. launch_type,
     "--cwd=current",
     "--hold",
     "--",

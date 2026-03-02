@@ -80,6 +80,10 @@ require("viewim").setup({
     oil = true,
     neo_tree = true,
   },
+  kitty = {
+    listen_on = nil,
+    launch_type = "os-window",
+  },
 })
 ```
 
@@ -90,6 +94,8 @@ require("viewim").setup({
 | `integrations.nvim_tree` | `bool` | `true` | Enable nvim-tree keymap |
 | `integrations.oil` | `bool` | `true` | Enable oil.nvim keymap |
 | `integrations.neo_tree` | `bool` | `true` | Enable neo-tree keymap |
+| `kitty.listen_on` | `string\|nil` | `nil` | Kitty remote socket (fallback to `$KITTY_LISTEN_ON`) |
+| `kitty.launch_type` | `string` | `"os-window"` | Kitty launch target (`os-window`, `tab`, `window`) |
 
 ## Usage
 
