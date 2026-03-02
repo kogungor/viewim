@@ -32,6 +32,20 @@ local function resolve_path(path)
   return vim.fn.fnamemodify(path, ":p")
 end
 
+local function join_nonempty(lines)
+  if type(lines) ~= "table" then
+    return ""
+  end
+
+  local acc = {}
+  for _, line in ipairs(lines) do
+    if line and line:match("%S") then
+      table.insert(acc, line)
+    end
+  end
+  return table.concat(acc, "\n")
+end
+
 --- Preview an image file in the terminal.
 --- @param path string absolute path to the image file
 function M.preview(path)
@@ -72,15 +86,13 @@ end
 --- Open image in a new kitty OS window using kitten icat.
 --- @param path string
 function M._preview_kitty(path)
-  local launcher = "kitty"
-  if vim.fn.executable(launcher) ~= 1 then
+  if vim.fn.executable("kitty") ~= 1 then
     vim.notify("viewim: 'kitty' command not found in $PATH", vim.log.levels.ERROR)
     return
   end
 
   local listen_on = os.getenv("KITTY_LISTEN_ON")
-
-  local cmd = { launcher, "@" }
+  local cmd = { "kitty", "@" }
   if listen_on and listen_on ~= "" then
     vim.list_extend(cmd, { "--to", listen_on })
   end
@@ -97,14 +109,40 @@ function M._preview_kitty(path)
     path,
   })
 
-  local out = vim.fn.system(cmd)
-  if vim.v.shell_error ~= 0 then
-    local msg = (out or ""):gsub("^%s+", ""):gsub("%s+$", "")
-    if msg == "" then
-      msg = "command failed with exit code " .. vim.v.shell_error
-    end
-    vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
-  end
+  local stderr_buf = {}
+  vim.fn.jobstart(cmd, {
+    detach = true,
+    on_stderr = function(_, data)
+      if type(data) == "table" then
+        vim.list_extend(stderr_buf, data)
+      end
+    end,
+    on_exit = function(_, code)
+      if code == 0 then
+        return
+      end
+
+      local stderr_msg = join_nonempty(stderr_buf)
+
+      if stderr_msg:match("/dev/tty") or stderr_msg:lower():match("controlling terminal") then
+        local shell_cmd = table.concat({
+          "kitty @ launch --type=os-window --cwd=current --hold -- kitty +kitten icat",
+          vim.fn.shellescape(path),
+          ">/dev/null 2>&1 &",
+        }, " ")
+        vim.schedule(function()
+          vim.cmd("silent !" .. shell_cmd)
+          vim.cmd("redraw!")
+        end)
+        return
+      end
+
+      local msg = stderr_msg ~= "" and stderr_msg or ("kitty launch exited with code " .. code)
+      vim.schedule(function()
+        vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
+      end)
+    end,
+  })
 end
 
 --- Open image in a new wezterm pane.
