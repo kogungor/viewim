@@ -46,6 +46,30 @@ local function join_nonempty(lines)
   return table.concat(acc, "\n")
 end
 
+local function shell_launch_kitty(path, listen_on)
+  local parts = { "kitty", "@" }
+  if listen_on and listen_on ~= "" then
+    table.insert(parts, "--to")
+    table.insert(parts, vim.fn.shellescape(listen_on))
+  end
+
+  vim.list_extend(parts, {
+    "launch",
+    "--type=os-window",
+    "--cwd=current",
+    "--hold",
+    "--",
+    "kitty",
+    "+kitten",
+    "icat",
+    vim.fn.shellescape(path),
+  })
+
+  local cmdline = table.concat(parts, " ") .. " >/dev/null 2>&1 &"
+  vim.cmd("silent !" .. cmdline)
+  vim.cmd("redraw!")
+end
+
 --- Preview an image file in the terminal.
 --- @param path string absolute path to the image file
 function M.preview(path)
@@ -118,22 +142,19 @@ function M._preview_kitty(path)
       end
     end,
     on_exit = function(_, code)
-      if code == 0 then
+      local stderr_msg = join_nonempty(stderr_buf)
+      local stderr_lower = stderr_msg:lower()
+      local tty_issue = stderr_lower:find("/dev/tty", 1, true)
+        or stderr_lower:find("controlling terminal", 1, true)
+
+      if tty_issue then
+        vim.schedule(function()
+          shell_launch_kitty(path, listen_on)
+        end)
         return
       end
 
-      local stderr_msg = join_nonempty(stderr_buf)
-
-      if stderr_msg:match("/dev/tty") or stderr_msg:lower():match("controlling terminal") then
-        local shell_cmd = table.concat({
-          "kitty @ launch --type=os-window --cwd=current --hold -- kitty +kitten icat",
-          vim.fn.shellescape(path),
-          ">/dev/null 2>&1 &",
-        }, " ")
-        vim.schedule(function()
-          vim.cmd("silent !" .. shell_cmd)
-          vim.cmd("redraw!")
-        end)
+      if code == 0 then
         return
       end
 
