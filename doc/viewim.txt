@@ -153,7 +153,7 @@ Options: ~
     Type: string
     Default: `"auto"`
     External opener command for Ghostty. `auto` uses native opener:
-    macOS `open`, Linux `xdg-open`, Windows `cmd.exe /c start`.
+    macOS `open`, Linux `xdg-open`, Windows `explorer.exe`.
 
 ==============================================================================
 5. COMMANDS                                                *viewim-commands*
@@ -229,7 +229,7 @@ No preview appears in Ghostty: ~
   2. Ensure native opener exists on your platform:
        macOS: `open`
        Linux: `xdg-open`
-       Windows: `cmd.exe`
+       Windows: `explorer.exe`
   3. Or set `ghostty.opener` explicitly in setup.
 
 Relative path not found: ~

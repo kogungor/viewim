@@ -61,28 +61,58 @@ local function socket_is_available(addr)
   return vim.fn.getftype(path) == "socket"
 end
 
-local function shell_launch_kitty(path, listen_on)
-  local parts = { "kitty", "@" }
+local function has_control_chars(value)
+  if type(value) ~= "string" then
+    return false
+  end
+  return value:find("[%z\1-\31\127]") ~= nil
+end
+
+local function detached_launch_kitty(path, listen_on, launch_type)
+  local cmd = { "kitty", "@" }
   if listen_on and listen_on ~= "" and socket_is_available(listen_on) then
-    table.insert(parts, "--to")
-    table.insert(parts, vim.fn.shellescape(listen_on))
+    vim.list_extend(cmd, { "--to", listen_on })
   end
 
-  vim.list_extend(parts, {
+  vim.list_extend(cmd, {
     "launch",
-    "--type=os-window",
+    "--type=" .. (launch_type or "os-window"),
     "--cwd=current",
     "--hold",
     "--",
     "kitty",
     "+kitten",
     "icat",
-    vim.fn.shellescape(path),
+    path,
   })
 
-  local cmdline = table.concat(parts, " ") .. " >/dev/null 2>&1 &"
-  vim.cmd("silent !" .. cmdline)
-  vim.cmd("redraw!")
+  local stderr_buf = {}
+  local job_id = vim.fn.jobstart(cmd, {
+    detach = true,
+    on_stderr = function(_, data)
+      if type(data) == "table" then
+        vim.list_extend(stderr_buf, data)
+      end
+    end,
+    on_exit = function(_, code)
+      if code == 0 then
+        return
+      end
+
+      local msg = join_nonempty(stderr_buf)
+      if msg == "" then
+        msg = "kitty launch exited with code " .. code
+      end
+
+      vim.schedule(function()
+        vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
+      end)
+    end,
+  })
+
+  if job_id <= 0 then
+    vim.notify("viewim: failed to start kitty launch job", vim.log.levels.ERROR)
+  end
 end
 
 local function build_external_open_cmd(path, opener)
@@ -96,7 +126,7 @@ local function build_external_open_cmd(path, opener)
   elseif platform == "linux" then
     return { "xdg-open", path }
   elseif platform == "windows" then
-    return { "cmd.exe", "/c", "start", "", path }
+    return { "explorer.exe", path }
   end
 
   return nil
@@ -110,7 +140,17 @@ function M.preview(path)
     return
   end
 
+  if has_control_chars(path) then
+    vim.notify("viewim: rejected path with control characters", vim.log.levels.ERROR)
+    return
+  end
+
   path = resolve_path(path)
+
+  if has_control_chars(path) then
+    vim.notify("viewim: rejected path with control characters", vim.log.levels.ERROR)
+    return
+  end
 
   if not config.is_image(path) then
     vim.notify("viewim: not a supported image: " .. path, vim.log.levels.WARN)
@@ -200,14 +240,14 @@ function M._preview_kitty(path)
         end
 
         vim.schedule(function()
-          shell_launch_kitty(path, retry_listen)
+          detached_launch_kitty(path, retry_listen, launch_type)
         end)
         return
       end
 
       if tty_issue then
         vim.schedule(function()
-          shell_launch_kitty(path, listen_on)
+          detached_launch_kitty(path, listen_on, launch_type)
         end)
         return
       end

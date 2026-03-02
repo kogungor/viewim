@@ -35,7 +35,7 @@ function M.get_native_opener()
   elseif platform == "linux" then
     return "xdg-open"
   elseif platform == "windows" then
-    return "cmd.exe"
+    return "explorer.exe"
   end
   return nil
 end

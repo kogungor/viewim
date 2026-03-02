@@ -1,5 +1,24 @@
-# Generic local files
+# macOS / OS junk
 .DS_Store
+
+# Logs
 *.log
+
+# Local env files
 .env
 .env.*
+
+# Neovim/editor temp files
+*.swp
+*.swo
+*~
+
+# Generated tags
+tags
+doc/tags
+
+# Local tooling metadata
+.opencode/
+
+# Private planning docs
+PLAN.md

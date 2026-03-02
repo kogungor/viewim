@@ -176,7 +176,7 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
 - **ghostty** — opens the image with your OS native viewer:
   - macOS: `open <file>`
   - Linux: `xdg-open <file>`
-  - Windows: `cmd.exe /c start "" <file>`
+  - Windows: `explorer.exe <file>`
 
 ## License
 
