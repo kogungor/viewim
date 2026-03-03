@@ -1,4 +1,5 @@
 local config = require("viewim.config")
+local notify = require("viewim.notify")
 
 local M = {}
 
@@ -21,7 +22,7 @@ function M.apply(integration, node_path, ctx)
 
   local ok, resolved = pcall(resolver, node_path, ctx or {})
   if not ok then
-    vim.notify("viewim: integrations." .. integration .. ".resolve_path failed", vim.log.levels.WARN)
+    notify.warn("viewim: integrations." .. integration .. ".resolve_path failed")
     return node_path
   end
 
@@ -30,7 +31,7 @@ function M.apply(integration, node_path, ctx)
   end
 
   if resolved ~= nil then
-    vim.notify("viewim: integrations." .. integration .. ".resolve_path must return a string", vim.log.levels.WARN)
+    notify.warn("viewim: integrations." .. integration .. ".resolve_path must return a string")
   end
 
   return node_path

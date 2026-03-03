@@ -109,6 +109,7 @@ require("viewim").setup()
 ```lua
 require("viewim").setup({
   enabled = true,
+  quiet_warnings = false,
   keymap = "<leader>p",
   mouse_preview = {
     enabled = false,
@@ -158,6 +159,7 @@ require("viewim").setup({
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `enabled` | `bool` | `true` | Enable or disable viewim previews globally |
+| `quiet_warnings` | `bool` | `false` | Suppress non-critical warning notifications during normal preview flow |
 | `keymap` | `string` | `"<leader>p"` | Key to trigger image preview in file explorers |
 | `mouse_preview.enabled` | `bool` | `false` | Enable mouse-triggered preview in explorer buffers |
 | `mouse_preview.key` | `string` | `"<M-LeftMouse>"` | Mouse keymap used for preview when enabled |

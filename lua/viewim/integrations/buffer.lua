@@ -1,4 +1,5 @@
 local preview = require("viewim.preview")
+local notify = require("viewim.notify")
 
 local M = {}
 
@@ -7,7 +8,7 @@ function M.preview()
   local path = vim.api.nvim_buf_get_name(0)
 
   if not path or path == "" then
-    vim.notify("viewim: current buffer has no file", vim.log.levels.WARN)
+    notify.warn("viewim: current buffer has no file")
     return
   end
 

@@ -108,6 +108,7 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
 
   require("viewim").setup({
     enabled = true,
+    quiet_warnings = false,
     keymap = "<leader>p",
     mouse_preview = {
       enabled = false,
@@ -160,6 +161,11 @@ Options: ~
     Type: boolean
     Default: `true`
     Enables or disables viewim previews globally.
+
+  `quiet_warnings`                           *viewim-config-quiet-warnings*
+    Type: boolean
+    Default: `false`
+    Suppresses non-critical warning notifications during normal preview flow.
 
   `keymap`                                               *viewim-config-keymap*
     Type: string

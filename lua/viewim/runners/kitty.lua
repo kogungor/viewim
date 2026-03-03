@@ -1,6 +1,8 @@
 local util = require("viewim.runners.util")
+local notify = require("viewim.notify")
 
 local M = {}
+local missing_socket_warned = {}
 
 local function unix_socket_path(addr)
   if type(addr) ~= "string" then
@@ -84,10 +86,12 @@ function M.run(path, opts)
   if can_use_socket then
     vim.list_extend(cmd, { "--to", listen_on })
   elseif listen_on and listen_on ~= "" then
-    vim.notify(
-      "viewim: kitty socket not found, retrying without --to: " .. listen_on,
-      vim.log.levels.WARN
-    )
+    if not missing_socket_warned[listen_on] then
+      missing_socket_warned[listen_on] = true
+      notify.warn(
+        "viewim: kitty socket not found, retrying without --to: " .. listen_on
+      )
+    end
   end
 
   vim.list_extend(cmd, {

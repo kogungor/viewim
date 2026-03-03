@@ -1,11 +1,12 @@
 local preview = require("viewim.preview")
 local resolve = require("viewim.integrations.resolve")
+local notify = require("viewim.notify")
 
 local M = {}
 
 local function maybe_notify(silent, message)
   if not silent then
-    vim.notify(message, vim.log.levels.WARN)
+    notify.warn(message)
   end
 end
 

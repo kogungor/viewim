@@ -1,5 +1,6 @@
 local config = require("viewim.config")
 local detect = require("viewim.detect")
+local notify = require("viewim.notify")
 local path = require("viewim.path")
 local download = require("viewim.download")
 local url = require("viewim.url")
@@ -64,14 +65,12 @@ local function dispatch_preview(resolved)
     if exp and exp.internal_render and tty_failure then
       exp.internal_render = false
       exp._auto_disabled_reason = err or "controlling terminal unavailable"
-      vim.notify(
-        "viewim: internal render unavailable (no controlling terminal), auto-disabled for this session",
-        vim.log.levels.WARN
+      notify.warn(
+        "viewim: internal render unavailable (no controlling terminal), auto-disabled for this session"
       )
     else
-      vim.notify(
-        "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or ""),
-        vim.log.levels.WARN
+      notify.warn(
+        "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or "")
       )
     end
   end
@@ -83,9 +82,8 @@ local function dispatch_preview(resolved)
   elseif term == "ghostty" then
     run_or_notify(ghostty_runner.run(resolved, config.options and config.options.ghostty))
   else
-    vim.notify(
-      "viewim: unsupported terminal. Requires kitty, wezterm, or ghostty.",
-      vim.log.levels.ERROR
+    notify.error(
+      "viewim: unsupported terminal. Requires kitty, wezterm, or ghostty."
     )
   end
 end
@@ -98,7 +96,7 @@ function M.preview(raw_path)
   end
 
   if config.options.enabled == false then
-    vim.notify("viewim: plugin is disabled (use :ViewImageEnable)", vim.log.levels.WARN)
+    notify.warn("viewim: plugin is disabled (use :ViewImageEnable)")
     return
   end
 
@@ -106,24 +104,24 @@ function M.preview(raw_path)
   if is_remote then
     local remote = config.options and config.options.remote or {}
     if not remote.enabled then
-      vim.notify("viewim: remote preview is disabled (set remote.enabled=true)", vim.log.levels.WARN)
+      notify.warn("viewim: remote preview is disabled (set remote.enabled=true)")
       return
     end
 
     if remote.require_https and url.get_scheme(raw_path) ~= "https" then
-      vim.notify("viewim: remote preview requires https URLs", vim.log.levels.ERROR)
+      notify.error("viewim: remote preview requires https URLs")
       return
     end
 
     if vim.fn.executable("curl") ~= 1 then
-      vim.notify("viewim: 'curl' command not found in $PATH", vim.log.levels.ERROR)
+      notify.error("viewim: 'curl' command not found in $PATH")
       return
     end
 
     download.fetch(raw_path, remote, function(local_path, _, err)
       vim.schedule(function()
         if err then
-          vim.notify(err, vim.log.levels.ERROR)
+          notify.error(err)
           return
         end
 
@@ -141,7 +139,7 @@ function M.preview(raw_path)
 
   local scheme = url.get_scheme(raw_path)
   if scheme and scheme ~= "http" and scheme ~= "https" then
-    vim.notify("viewim: unsupported URL scheme: " .. scheme, vim.log.levels.ERROR)
+    notify.error("viewim: unsupported URL scheme: " .. scheme)
     return
   end
 

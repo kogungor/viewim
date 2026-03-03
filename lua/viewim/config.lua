@@ -20,6 +20,7 @@ local VALID_GHOSTTY_MODES = {
 
 M.defaults = {
   enabled = true,
+  quiet_warnings = false,
   keymap = "<leader>p",
   mouse_preview = {
     enabled = false,
@@ -81,6 +82,14 @@ M.defaults = {
 }
 
 M.options = {}
+local quiet_warnings = false
+
+local function warn(message)
+  if quiet_warnings then
+    return
+  end
+  vim.notify(message, vim.log.levels.WARN)
+end
 
 local function normalize_extensions(values)
   if type(values) ~= "table" then
@@ -98,13 +107,13 @@ local function normalize_extensions(values)
       if candidate:match("^%.[a-z0-9]+$") then
         table.insert(normalized, candidate)
       else
-        vim.notify("viewim: ignoring invalid extension: " .. ext, vim.log.levels.WARN)
+        warn("viewim: ignoring invalid extension: " .. ext)
       end
     end
   end
 
   if #normalized == 0 then
-    vim.notify("viewim: no valid supported_extensions provided, using defaults", vim.log.levels.WARN)
+    warn("viewim: no valid supported_extensions provided, using defaults")
     return vim.deepcopy(M.defaults.supported_extensions)
   end
 
@@ -114,7 +123,7 @@ end
 local function normalize_kitty(opts)
   opts = opts or {}
   if not VALID_KITTY_LAUNCH_TYPES[opts.launch_type] then
-    vim.notify("viewim: invalid kitty.launch_type, using 'os-window'", vim.log.levels.WARN)
+    warn("viewim: invalid kitty.launch_type, using 'os-window'")
     opts.launch_type = "os-window"
   end
   return opts
@@ -133,7 +142,7 @@ local function normalize_integration(name, value)
   end
 
   if type(value) ~= "table" then
-    vim.notify("viewim: invalid integrations." .. name .. ", using defaults", vim.log.levels.WARN)
+    warn("viewim: invalid integrations." .. name .. ", using defaults")
     return defaults
   end
 
@@ -143,7 +152,7 @@ local function normalize_integration(name, value)
   end
 
   if normalized.resolve_path ~= nil and type(normalized.resolve_path) ~= "function" then
-    vim.notify("viewim: integrations." .. name .. ".resolve_path must be a function", vim.log.levels.WARN)
+    warn("viewim: integrations." .. name .. ".resolve_path must be a function")
     normalized.resolve_path = nil
   end
 
@@ -165,7 +174,7 @@ end
 local function normalize_ghostty(opts)
   opts = opts or {}
   if not VALID_GHOSTTY_MODES[opts.mode] then
-    vim.notify("viewim: unsupported ghostty.mode, using 'external'", vim.log.levels.WARN)
+    warn("viewim: unsupported ghostty.mode, using 'external'")
     opts.mode = "external"
   end
 
@@ -176,7 +185,7 @@ local function normalize_ghostty(opts)
   if opts.tmux_split_percent ~= nil then
     local n = tonumber(opts.tmux_split_percent)
     if not n or n < 1 or n > 99 then
-      vim.notify("viewim: invalid ghostty.tmux_split_percent, ignoring", vim.log.levels.WARN)
+      warn("viewim: invalid ghostty.tmux_split_percent, ignoring")
       opts.tmux_split_percent = nil
     else
       opts.tmux_split_percent = math.floor(n)
@@ -194,14 +203,14 @@ local function normalize_wezterm(opts)
   opts = opts or {}
 
   if not VALID_WEZTERM_SPLIT_DIRECTIONS[opts.split_direction] then
-    vim.notify("viewim: invalid wezterm.split_direction, using 'right'", vim.log.levels.WARN)
+    warn("viewim: invalid wezterm.split_direction, using 'right'")
     opts.split_direction = "right"
   end
 
   if opts.split_percent ~= nil then
     local n = tonumber(opts.split_percent)
     if not n or n < 1 or n > 99 then
-      vim.notify("viewim: invalid wezterm.split_percent, ignoring", vim.log.levels.WARN)
+      warn("viewim: invalid wezterm.split_percent, ignoring")
       opts.split_percent = nil
     else
       opts.split_percent = math.floor(n)
@@ -223,12 +232,12 @@ local function normalize_remote(opts)
   end
 
   if type(opts.timeout_ms) ~= "number" or opts.timeout_ms < 1000 then
-    vim.notify("viewim: invalid remote.timeout_ms, using 10000", vim.log.levels.WARN)
+    warn("viewim: invalid remote.timeout_ms, using 10000")
     opts.timeout_ms = 10000
   end
 
   if type(opts.max_bytes) ~= "number" or opts.max_bytes <= 0 then
-    vim.notify("viewim: invalid remote.max_bytes, using 10485760", vim.log.levels.WARN)
+    warn("viewim: invalid remote.max_bytes, using 10485760")
     opts.max_bytes = 10485760
   end
 
@@ -244,6 +253,13 @@ local function normalize_enabled(value)
     return value
   end
   return true
+end
+
+local function normalize_quiet_warnings(value)
+  if type(value) == "boolean" then
+    return value
+  end
+  return false
 end
 
 local function normalize_mouse_preview(opts)
@@ -291,6 +307,8 @@ function M.setup(opts)
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)
 
   M.options.enabled = normalize_enabled(M.options.enabled)
+  M.options.quiet_warnings = normalize_quiet_warnings(M.options.quiet_warnings)
+  quiet_warnings = M.options.quiet_warnings
   M.options.mouse_preview = normalize_mouse_preview(M.options.mouse_preview)
   M.options.explorer_auto_preview = normalize_explorer_auto_preview(M.options.explorer_auto_preview)
   M.options.experimental = normalize_experimental(M.options.experimental)
