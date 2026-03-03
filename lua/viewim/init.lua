@@ -1,7 +1,14 @@
 local config = require("viewim.config")
+local detect = require("viewim.detect")
 local preview = require("viewim.preview")
 
 local M = {}
+
+local function ensure_config_initialized()
+  if not config.options or vim.tbl_isempty(config.options) then
+    config.setup({})
+  end
+end
 
 --- Setup viewim with user options and register keymaps for integrations.
 --- @param opts table|nil
@@ -49,6 +56,41 @@ function M.setup(opts)
       end,
     })
   end
+end
+
+function M.is_enabled()
+  ensure_config_initialized()
+  return config.options.enabled == true
+end
+
+function M.enable()
+  ensure_config_initialized()
+  config.options.enabled = true
+  vim.notify("viewim: enabled", vim.log.levels.INFO)
+end
+
+function M.disable()
+  ensure_config_initialized()
+  config.options.enabled = false
+  vim.notify("viewim: disabled", vim.log.levels.INFO)
+end
+
+function M.toggle()
+  ensure_config_initialized()
+  config.options.enabled = not M.is_enabled()
+  if config.options.enabled then
+    vim.notify("viewim: enabled", vim.log.levels.INFO)
+  else
+    vim.notify("viewim: disabled", vim.log.levels.INFO)
+  end
+end
+
+function M.status()
+  ensure_config_initialized()
+  local enabled = config.options.enabled and "enabled" or "disabled"
+  local term = detect.get_terminal() or "unsupported"
+  local remote = (config.options.remote and config.options.remote.enabled) and "on" or "off"
+  vim.notify("viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote, vim.log.levels.INFO)
 end
 
 --- Preview an image. Detects context automatically or accepts a path.

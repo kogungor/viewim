@@ -101,6 +101,7 @@ require("viewim").setup()
 
 ```lua
 require("viewim").setup({
+  enabled = true,
   keymap = "<leader>p",
   supported_extensions = {
     ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
@@ -130,6 +131,7 @@ require("viewim").setup({
 
 | Option | Type | Default | Description |
 |---|---|---|---|
+| `enabled` | `bool` | `true` | Enable or disable viewim previews globally |
 | `keymap` | `string` | `"<leader>p"` | Key to trigger image preview in file explorers |
 | `supported_extensions` | `table` | see above | List of image file extensions to recognize |
 | `integrations.nvim_tree` | `bool` | `true` | Enable nvim-tree keymap |
@@ -170,6 +172,13 @@ Run the command:
 ```
 
 If the current buffer is an image file, it previews it.
+
+### 🔧 Runtime controls
+
+- `:ViewImageEnable` - enable previews
+- `:ViewImageDisable` - disable previews
+- `:ViewImageToggle` - toggle enabled/disabled state
+- `:ViewImageStatus` - show enabled state, detected terminal, and remote status
 
 You can also pass an explicit path:
 

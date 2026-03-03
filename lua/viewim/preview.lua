@@ -65,6 +65,11 @@ function M.preview(raw_path)
     config.setup({})
   end
 
+  if config.options.enabled == false then
+    vim.notify("viewim: plugin is disabled (use :ViewImageEnable)", vim.log.levels.WARN)
+    return
+  end
+
   local is_remote = url.is_http_url(raw_path)
   if is_remote then
     local remote = config.options and config.options.remote or {}

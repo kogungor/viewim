@@ -101,6 +101,7 @@ Kitty users (required): ~
 Call `setup()` with an optional table. All values shown are defaults: >lua
 
   require("viewim").setup({
+    enabled = true,
     keymap = "<leader>p",
     supported_extensions = {
       ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
@@ -129,6 +130,11 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
 <
 
 Options: ~
+
+  `enabled`                                           *viewim-config-enabled*
+    Type: boolean
+    Default: `true`
+    Enables or disables viewim previews globally.
 
   `keymap`                                               *viewim-config-keymap*
     Type: string
@@ -207,6 +213,19 @@ Options: ~
                         - In oil.nvim: preview file under cursor
                         - In neo-tree: preview file under cursor
                         - Otherwise: preview current buffer file
+
+                                                        *:ViewImageEnable*
+:ViewImageEnable        Enable viewim previews.
+
+                                                       *:ViewImageDisable*
+:ViewImageDisable       Disable viewim previews.
+
+                                                        *:ViewImageToggle*
+:ViewImageToggle        Toggle viewim enabled state.
+
+                                                        *:ViewImageStatus*
+:ViewImageStatus        Show current status (enabled state, terminal,
+                        and remote preview state).
 
 ==============================================================================
 6. KEYMAPS                                                  *viewim-keymaps*

@@ -7,6 +7,7 @@ local VALID_KITTY_LAUNCH_TYPES = {
 }
 
 M.defaults = {
+  enabled = true,
   keymap = "<leader>p",
   supported_extensions = {
     ".bmp",
@@ -116,10 +117,18 @@ local function normalize_remote(opts)
   return opts
 end
 
+local function normalize_enabled(value)
+  if type(value) == "boolean" then
+    return value
+  end
+  return true
+end
+
 function M.setup(opts)
   opts = opts or {}
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)
 
+  M.options.enabled = normalize_enabled(M.options.enabled)
   M.options.supported_extensions = normalize_extensions(M.options.supported_extensions)
   M.options.kitty = normalize_kitty(M.options.kitty)
   M.options.ghostty = normalize_ghostty(M.options.ghostty)
