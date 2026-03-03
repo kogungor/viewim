@@ -19,7 +19,7 @@ function M.setup(opts)
   local integrations = config.options.integrations
 
   -- nvim-tree integration
-  if integrations.nvim_tree then
+  if integrations.nvim_tree and integrations.nvim_tree.enabled then
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("viewim_nvim_tree", { clear = true }),
       pattern = "NvimTree",
@@ -32,7 +32,7 @@ function M.setup(opts)
   end
 
   -- oil.nvim integration
-  if integrations.oil then
+  if integrations.oil and integrations.oil.enabled then
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("viewim_oil", { clear = true }),
       pattern = "oil",
@@ -45,7 +45,7 @@ function M.setup(opts)
   end
 
   -- neo-tree integration
-  if integrations.neo_tree then
+  if integrations.neo_tree and integrations.neo_tree.enabled then
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("viewim_neo_tree", { clear = true }),
       pattern = "neo-tree",
@@ -104,12 +104,13 @@ function M.view(path)
 
   -- Auto-detect context based on current filetype
   local ft = vim.bo.filetype
+  local integrations = config.options.integrations or {}
 
-  if ft == "NvimTree" then
+  if ft == "NvimTree" and integrations.nvim_tree and integrations.nvim_tree.enabled then
     require("viewim.integrations.nvim_tree").preview()
-  elseif ft == "oil" then
+  elseif ft == "oil" and integrations.oil and integrations.oil.enabled then
     require("viewim.integrations.oil").preview()
-  elseif ft == "neo-tree" then
+  elseif ft == "neo-tree" and integrations.neo_tree and integrations.neo_tree.enabled then
     require("viewim.integrations.neo_tree").preview()
   else
     -- Fall back to current buffer

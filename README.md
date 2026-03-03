@@ -107,9 +107,9 @@ require("viewim").setup({
     ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
   },
   integrations = {
-    nvim_tree = true,
-    oil = true,
-    neo_tree = true,
+    nvim_tree = { enabled = true, resolve_path = nil },
+    oil = { enabled = true, resolve_path = nil },
+    neo_tree = { enabled = true, resolve_path = nil },
   },
   kitty = {
     listen_on = nil,
@@ -134,9 +134,10 @@ require("viewim").setup({
 | `enabled` | `bool` | `true` | Enable or disable viewim previews globally |
 | `keymap` | `string` | `"<leader>p"` | Key to trigger image preview in file explorers |
 | `supported_extensions` | `table` | see above | List of image file extensions to recognize |
-| `integrations.nvim_tree` | `bool` | `true` | Enable nvim-tree keymap |
-| `integrations.oil` | `bool` | `true` | Enable oil.nvim keymap |
-| `integrations.neo_tree` | `bool` | `true` | Enable neo-tree keymap |
+| `integrations.nvim_tree.enabled` | `bool` | `true` | Enable nvim-tree keymap |
+| `integrations.oil.enabled` | `bool` | `true` | Enable oil.nvim keymap |
+| `integrations.neo_tree.enabled` | `bool` | `true` | Enable neo-tree keymap |
+| `integrations.<name>.resolve_path` | `function\|nil` | `nil` | Optional hook to rewrite selected path before preview |
 | `kitty.listen_on` | `string\|nil` | `nil` | Kitty remote socket (fallback to `$KITTY_LISTEN_ON`) |
 | `kitty.launch_type` | `string` | `"os-window"` | Kitty launch target (`os-window`, `tab`, `window`) |
 | `ghostty.mode` | `string` | `"external"` | Ghostty preview mode (currently `external`) |
@@ -153,6 +154,25 @@ Notes:
 - Invalid `kitty.launch_type` falls back to `"os-window"` with a warning.
 - Unsupported `ghostty.mode` falls back to `"external"` with a warning.
 - `.avif` is recognized by viewim, but actual rendering depends on terminal/image codec support.
+
+Integration resolver hooks:
+
+```lua
+require("viewim").setup({
+  integrations = {
+    nvim_tree = {
+      enabled = true,
+      resolve_path = function(node_path, ctx)
+        return node_path
+      end,
+    },
+  },
+})
+```
+
+- `resolve_path(node_path, ctx)` is optional and can rewrite the selected path before preview.
+- If the hook errors or returns an invalid value, viewim falls back to the original path.
+- Backward compatible shorthand still works: `integrations = { nvim_tree = true }`.
 
 ## 🚀 Usage
 

@@ -1,4 +1,5 @@
 local preview = require("viewim.preview")
+local resolve = require("viewim.integrations.resolve")
 
 local M = {}
 
@@ -22,7 +23,12 @@ function M.preview()
     return
   end
 
-  preview.preview(node.absolute_path)
+  local resolved = resolve.apply("nvim_tree", node.absolute_path, {
+    filetype = vim.bo.filetype,
+    node = node,
+  })
+
+  preview.preview(resolved)
 end
 
 return M

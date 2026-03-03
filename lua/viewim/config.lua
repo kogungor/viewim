@@ -19,9 +19,18 @@ M.defaults = {
     ".avif",
   },
   integrations = {
-    nvim_tree = true,
-    oil = true,
-    neo_tree = true,
+    nvim_tree = {
+      enabled = true,
+      resolve_path = nil,
+    },
+    oil = {
+      enabled = true,
+      resolve_path = nil,
+    },
+    neo_tree = {
+      enabled = true,
+      resolve_path = nil,
+    },
   },
   kitty = {
     listen_on = nil,
@@ -80,6 +89,48 @@ local function normalize_kitty(opts)
   return opts
 end
 
+local function normalize_integration(name, value)
+  local defaults = vim.deepcopy(M.defaults.integrations[name] or { enabled = true, resolve_path = nil })
+
+  if type(value) == "boolean" then
+    defaults.enabled = value
+    return defaults
+  end
+
+  if value == nil then
+    return defaults
+  end
+
+  if type(value) ~= "table" then
+    vim.notify("viewim: invalid integrations." .. name .. ", using defaults", vim.log.levels.WARN)
+    return defaults
+  end
+
+  local normalized = vim.tbl_deep_extend("force", defaults, value)
+  if type(normalized.enabled) ~= "boolean" then
+    normalized.enabled = true
+  end
+
+  if normalized.resolve_path ~= nil and type(normalized.resolve_path) ~= "function" then
+    vim.notify("viewim: integrations." .. name .. ".resolve_path must be a function", vim.log.levels.WARN)
+    normalized.resolve_path = nil
+  end
+
+  return normalized
+end
+
+local function normalize_integrations(values)
+  if type(values) ~= "table" then
+    return vim.deepcopy(M.defaults.integrations)
+  end
+
+  return {
+    nvim_tree = normalize_integration("nvim_tree", values.nvim_tree),
+    oil = normalize_integration("oil", values.oil),
+    neo_tree = normalize_integration("neo_tree", values.neo_tree),
+  }
+end
+
 local function normalize_ghostty(opts)
   opts = opts or {}
   if opts.mode ~= "external" then
@@ -129,6 +180,7 @@ function M.setup(opts)
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)
 
   M.options.enabled = normalize_enabled(M.options.enabled)
+  M.options.integrations = normalize_integrations(M.options.integrations)
   M.options.supported_extensions = normalize_extensions(M.options.supported_extensions)
   M.options.kitty = normalize_kitty(M.options.kitty)
   M.options.ghostty = normalize_ghostty(M.options.ghostty)

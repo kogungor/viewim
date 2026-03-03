@@ -107,9 +107,9 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
     },
     integrations = {
-      nvim_tree = true,
-      oil = true,
-      neo_tree = true,
+      nvim_tree = { enabled = true, resolve_path = nil },
+      oil = { enabled = true, resolve_path = nil },
+      neo_tree = { enabled = true, resolve_path = nil },
     },
     kitty = {
       listen_on = nil,
@@ -150,8 +150,24 @@ Options: ~
 
   `integrations`                                  *viewim-config-integrations*
     Type: table
-    Default: `{ nvim_tree = true, oil = true, neo_tree = true }`
+    Default: `{ nvim_tree = { enabled = true }, oil = { enabled = true },
+               neo_tree = { enabled = true } }`
     Enable or disable keymaps for specific file explorers.
+    Optional `resolve_path` callback can rewrite selected path before preview.
+
+  `integrations.<name>.enabled`                    *viewim-config-integration-enabled*
+    Type: boolean
+    Default: `true`
+    Enables integration keymap wiring for `nvim_tree`, `oil`, and `neo_tree`.
+
+  `integrations.<name>.resolve_path`               *viewim-config-integration-resolve*
+    Type: function|nil
+    Default: `nil`
+    Optional callback to rewrite paths before preview:
+      `resolve_path(node_path, ctx) -> string|nil`
+    If callback errors or returns invalid type, viewim falls back to `node_path`.
+    Backward compatible shorthand is supported:
+      `integrations = { nvim_tree = true }`
 
   `kitty.listen_on`                                  *viewim-config-kitty-sock*
     Type: string|nil

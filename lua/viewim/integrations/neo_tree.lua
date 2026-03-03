@@ -1,4 +1,5 @@
 local preview = require("viewim.preview")
+local resolve = require("viewim.integrations.resolve")
 
 local M = {}
 
@@ -40,7 +41,13 @@ function M.preview()
     return
   end
 
-  preview.preview(path)
+  local resolved = resolve.apply("neo_tree", path, {
+    filetype = vim.bo.filetype,
+    node = node,
+    state = state,
+  })
+
+  preview.preview(resolved)
 end
 
 return M

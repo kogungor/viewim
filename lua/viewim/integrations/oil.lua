@@ -1,4 +1,5 @@
 local preview = require("viewim.preview")
+local resolve = require("viewim.integrations.resolve")
 
 local M = {}
 
@@ -28,7 +29,13 @@ function M.preview()
     return
   end
 
-  preview.preview(dir .. entry.name)
+  local resolved = resolve.apply("oil", dir .. entry.name, {
+    filetype = vim.bo.filetype,
+    entry = entry,
+    dir = dir,
+  })
+
+  preview.preview(resolved)
 end
 
 return M
