@@ -318,6 +318,9 @@ Preview markdown/html image source under cursor:
 :ViewImageAtCursor
 ```
 
+If cursor is not directly on an image token, viewim picks the nearest image source
+within a small local scan window.
+
 Supported cursor patterns:
 - Markdown image: `![alt](path-or-url)`
 - Markdown reference image: `![alt][id]` with `[id]: path-or-url`
