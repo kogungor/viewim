@@ -427,6 +427,10 @@ Options: ~
                         Optional `[query]` pre-filters results.
                         Selection preview and `<Space>` action depend on picker backend.
                         Reports active picker backend after opening.
+                        Current backend behavior:
+                        - telescope: selection-change preview + `<Space>` action
+                        - snacks: picker + confirm preview
+                        - builtin: confirm preview
 
 ==============================================================================
 6. KEYMAPS                                                  *viewim-keymaps*
@@ -515,6 +519,7 @@ Checks performed:
 - Terminal emulator detected (kitty / wezterm / ghostty)
 - CLI tools available (`kitten` for kitty, `wezterm` for wezterm)
 - `curl` available in `$PATH` (for remote URL previews)
+- search backend availability and active picker resolution
 - Kitty remote socket available (for kitty)
 - Ghostty dependencies by mode (`opener` for external mode, `tmux` for tmux mode)
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)

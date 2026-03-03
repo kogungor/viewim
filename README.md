@@ -148,6 +148,11 @@ Search actions:
 - `<Space>` action inside picker triggers `search.space_action`
 - `:SearchImage` reports selected picker backend (for example `telescope`, `snacks`, `builtin`)
 
+Backend behavior (current MVP):
+- `telescope`: supports selection-change preview and `<Space>` action.
+- `snacks`: opens picker and selection confirm preview.
+- `builtin` (`vim.ui.select`): selection confirm preview.
+
 ## 📜 License
 
 MIT
