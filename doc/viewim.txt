@@ -331,7 +331,7 @@ Options: ~
                         Supported patterns:
                         - `![alt](path-or-url)`
                         - `![alt][id]` with `[id]: path-or-url`
-                        - `<img src="path-or-url" ...>`
+                        - `<img src="path-or-url" ...>` (single-line or multi-line)
 
                                                         *:ViewImageEnable*
 :ViewImageEnable        Enable viewim previews.

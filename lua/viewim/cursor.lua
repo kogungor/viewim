@@ -1,6 +1,7 @@
 local notify = require("viewim.notify")
 
 local M = {}
+local HTML_SCAN_RADIUS = 20
 
 local function col_in_range(col, s, e)
   return col >= s and col <= e
@@ -152,12 +153,91 @@ local function html_img_src_under_cursor(line, col)
   end
 end
 
+local function cursor_in_tag(cursor_row, cursor_col, tag)
+  if cursor_row < tag.start_row or cursor_row > tag.end_row then
+    return false
+  end
+
+  if tag.start_row == tag.end_row then
+    return col_in_range(cursor_col, tag.start_col, tag.end_col)
+  end
+
+  if cursor_row == tag.start_row then
+    return cursor_col >= tag.start_col
+  end
+
+  if cursor_row == tag.end_row then
+    return cursor_col <= tag.end_col
+  end
+
+  return true
+end
+
+local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col)
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local from_row = math.max(1, cursor_row - HTML_SCAN_RADIUS)
+  local to_row = math.min(line_count, cursor_row + HTML_SCAN_RADIUS)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, from_row - 1, to_row, false)
+
+  local tags = {}
+  local current = nil
+
+  for i, line in ipairs(lines) do
+    local row = from_row + i - 1
+
+    if not current then
+      local s = line:find("<[Ii][Mm][Gg]%s")
+      if s then
+        local e = line:find(">", s, true)
+        if e then
+          table.insert(tags, {
+            text = line:sub(s, e),
+            start_row = row,
+            start_col = s,
+            end_row = row,
+            end_col = e,
+          })
+        else
+          current = {
+            text = line:sub(s),
+            start_row = row,
+            start_col = s,
+          }
+        end
+      end
+    else
+      local e = line:find(">", 1, true)
+      if e then
+        current.text = current.text .. "\n" .. line:sub(1, e)
+        current.end_row = row
+        current.end_col = e
+        table.insert(tags, current)
+        current = nil
+      else
+        current.text = current.text .. "\n" .. line
+      end
+    end
+  end
+
+  for _, tag in ipairs(tags) do
+    if cursor_in_tag(cursor_row, cursor_col, tag) then
+      local src = tag.text:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
+        or tag.text:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
+        or tag.text:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
+      return src and vim.trim(src) or nil
+    end
+  end
+
+  return nil
+end
+
 --- Extract image source under cursor from markdown/html image syntax.
 --- @return string|nil
 --- @return string|nil
 function M.get_image_source_under_cursor()
   local pos = vim.api.nvim_win_get_cursor(0)
   local bufnr = vim.api.nvim_get_current_buf()
+  local row = pos[1]
   local col = pos[2] + 1
   local line = vim.api.nvim_get_current_line()
 
@@ -174,6 +254,9 @@ function M.get_image_source_under_cursor()
 
   if not src then
     src = html_img_src_under_cursor(line, col)
+    if not src then
+      src = html_img_src_under_cursor_multiline(bufnr, row, col)
+    end
   end
 
   if not src then

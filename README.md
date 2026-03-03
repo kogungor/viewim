@@ -321,7 +321,7 @@ Preview markdown/html image source under cursor:
 Supported cursor patterns:
 - Markdown image: `![alt](path-or-url)`
 - Markdown reference image: `![alt][id]` with `[id]: path-or-url`
-- HTML image: `<img src="path-or-url" ...>`
+- HTML image: `<img src="path-or-url" ...>` (single-line or multi-line tag)
 
 In `markdown`, `mdx`, `rmd`, `quarto`, and `html` buffers, the cursor-preview keymap
 is available by default: `cursor_keymap = "<leader>wi"`.
