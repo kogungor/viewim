@@ -26,6 +26,12 @@ local function map_preview_keys(bufnr, key, module_name)
   end
 end
 
+local function map_cursor_preview_key(bufnr, key)
+  vim.keymap.set("n", key, function()
+    require("viewim").view_at_cursor()
+  end, { buffer = bufnr, silent = true, desc = "viewim: preview image at cursor" })
+end
+
 local function setup_auto_preview(bufnr, module_name)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -118,6 +124,7 @@ function M.setup(opts)
   config.setup(opts)
 
   local key = config.options.keymap
+  local cursor_key = config.options.cursor_keymap
   local integrations = config.options.integrations
 
   -- nvim-tree integration
@@ -155,6 +162,14 @@ function M.setup(opts)
       end,
     })
   end
+
+  vim.api.nvim_create_autocmd("FileType", {
+    group = vim.api.nvim_create_augroup("viewim_cursor_preview", { clear = true }),
+    pattern = { "markdown", "mdx", "rmd", "quarto", "html" },
+    callback = function(args)
+      map_cursor_preview_key(args.buf, cursor_key)
+    end,
+  })
 end
 
 function M.is_enabled()

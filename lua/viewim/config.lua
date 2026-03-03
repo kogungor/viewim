@@ -22,6 +22,7 @@ M.defaults = {
   enabled = true,
   quiet_warnings = false,
   keymap = "<leader>p",
+  cursor_keymap = "<leader>wi",
   mouse_preview = {
     enabled = false,
     key = "<M-LeftMouse>",
@@ -255,6 +256,13 @@ local function normalize_enabled(value)
   return true
 end
 
+local function normalize_cursor_keymap(value)
+  if type(value) == "string" and value ~= "" then
+    return value
+  end
+  return "<leader>wi"
+end
+
 local function normalize_quiet_warnings(value)
   if type(value) == "boolean" then
     return value
@@ -309,6 +317,7 @@ function M.setup(opts)
   M.options.enabled = normalize_enabled(M.options.enabled)
   M.options.quiet_warnings = normalize_quiet_warnings(M.options.quiet_warnings)
   quiet_warnings = M.options.quiet_warnings
+  M.options.cursor_keymap = normalize_cursor_keymap(M.options.cursor_keymap)
   M.options.mouse_preview = normalize_mouse_preview(M.options.mouse_preview)
   M.options.explorer_auto_preview = normalize_explorer_auto_preview(M.options.explorer_auto_preview)
   M.options.experimental = normalize_experimental(M.options.experimental)

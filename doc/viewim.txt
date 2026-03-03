@@ -110,6 +110,7 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
     enabled = true,
     quiet_warnings = false,
     keymap = "<leader>p",
+    cursor_keymap = "<leader>wi",
     mouse_preview = {
       enabled = false,
       key = "<M-LeftMouse>",
@@ -171,6 +172,11 @@ Options: ~
     Type: string
     Default: `"<leader>p"`
     Keymap to trigger image preview in file explorer buffers.
+
+  `cursor_keymap`                                 *viewim-config-cursor-keymap*
+    Type: string
+    Default: `"<leader>wi"`
+    Keymap to preview markdown/html image source under cursor.
 
   `mouse_preview.enabled`                         *viewim-config-mouse-enabled*
     Type: boolean
@@ -344,6 +350,9 @@ Options: ~
 
 By default, `<leader>p` is mapped in file explorer buffers (NvimTree, oil,
 neo-tree). This can be changed via the `keymap` option in |viewim-configuration|.
+
+`cursor_keymap` (default `<leader>wi`) is mapped in `markdown`, `mdx`, `rmd`,
+`quarto`, and `html` buffers for |:ViewImageAtCursor|.
 
 The keymap is buffer-local and only active in supported file explorer buffers.
 

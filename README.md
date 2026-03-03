@@ -112,6 +112,7 @@ require("viewim").setup({
   enabled = true,
   quiet_warnings = false,
   keymap = "<leader>p",
+  cursor_keymap = "<leader>wi",
   mouse_preview = {
     enabled = false,
     key = "<M-LeftMouse>",
@@ -162,6 +163,7 @@ require("viewim").setup({
 | `enabled` | `bool` | `true` | Enable or disable viewim previews globally |
 | `quiet_warnings` | `bool` | `false` | Suppress non-critical warning notifications during normal preview flow |
 | `keymap` | `string` | `"<leader>p"` | Key to trigger image preview in file explorers |
+| `cursor_keymap` | `string` | `"<leader>wi"` | Key to preview markdown/html image source under cursor |
 | `mouse_preview.enabled` | `bool` | `false` | Enable mouse-triggered preview in explorer buffers |
 | `mouse_preview.key` | `string` | `"<M-LeftMouse>"` | Mouse keymap used for preview when enabled |
 | `explorer_auto_preview.enabled` | `bool` | `false` | Auto-preview on cursor movement in explorer buffers |
@@ -319,6 +321,9 @@ Preview markdown/html image source under cursor:
 Supported cursor patterns:
 - Markdown image: `![alt](path-or-url)`
 - HTML image: `<img src="path-or-url" ...>`
+
+In `markdown`, `mdx`, `rmd`, `quarto`, and `html` buffers, the cursor-preview keymap
+is available by default: `cursor_keymap = "<leader>wi"`.
 
 If a path contains control characters (for example newline or NUL bytes), viewim rejects it before command execution.
 
