@@ -89,7 +89,7 @@ require("viewim").setup({
 
   search = {
     enabled = true,
-    preferred_picker = "auto", -- auto|telescope|snacks|builtin (adapters staged)
+    preferred_picker = "auto", -- auto|telescope|snacks|builtin
     max_results = 500,
     include_hidden = false,
   },
@@ -138,7 +138,7 @@ require("viewim").setup({
 
 For full option reference, troubleshooting, architecture, and all edge-case notes, use vimdoc.
 
-Current search behavior uses builtin selector (`vim.ui.select`) in MVP stage.
+Search picker backend is selected by `search.preferred_picker` with fallback order.
 
 ## 📜 License
 
