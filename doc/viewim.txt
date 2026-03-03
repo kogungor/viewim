@@ -111,6 +111,9 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
     quiet_warnings = false,
     keymap = "<leader>p",
     cursor_keymap = "<leader>wi",
+    preview_placement = {
+      direction = "right",
+    },
     mouse_preview = {
       enabled = false,
       key = "<M-LeftMouse>",
@@ -181,6 +184,12 @@ Options: ~
     Type: string
     Default: `"<leader>wi"`
     Keymap to preview markdown/html image source under cursor.
+
+  `preview_placement.direction`              *viewim-config-preview-placement*
+    Type: string
+    Default: `"right"`
+    Global preferred placement direction (`right`, `left`, `top`, `bottom`).
+    This is used as a shared preference for terminal-specific split behavior.
 
   `mouse_preview.enabled`                         *viewim-config-mouse-enabled*
     Type: boolean

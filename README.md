@@ -113,6 +113,9 @@ require("viewim").setup({
   quiet_warnings = false,
   keymap = "<leader>p",
   cursor_keymap = "<leader>wi",
+  preview_placement = {
+    direction = "right", -- right|left|top|bottom
+  },
   mouse_preview = {
     enabled = false,
     key = "<M-LeftMouse>",
@@ -168,6 +171,7 @@ require("viewim").setup({
 | `quiet_warnings` | `bool` | `false` | Suppress non-critical warning notifications during normal preview flow |
 | `keymap` | `string` | `"<leader>p"` | Key to trigger image preview in file explorers |
 | `cursor_keymap` | `string` | `"<leader>wi"` | Key to preview markdown/html image source under cursor |
+| `preview_placement.direction` | `string` | `"right"` | Global preferred placement direction (`right`, `left`, `top`, `bottom`) |
 | `mouse_preview.enabled` | `bool` | `false` | Enable mouse-triggered preview in explorer buffers |
 | `mouse_preview.key` | `string` | `"<M-LeftMouse>"` | Mouse keymap used for preview when enabled |
 | `explorer_auto_preview.enabled` | `bool` | `false` | Auto-preview on cursor movement in explorer buffers |
@@ -203,6 +207,7 @@ Notes:
 - Invalid `wezterm.split_direction` falls back to `"right"`.
 - Invalid `wezterm.split_percent` is ignored.
 - Unsupported `ghostty.mode` falls back to `"external"` with a warning.
+- `preview_placement.direction` currently defines a global preference and will be used by terminal adapters incrementally.
 
 Ghostty tmux mode example:
 

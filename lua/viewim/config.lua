@@ -23,6 +23,9 @@ M.defaults = {
   quiet_warnings = false,
   keymap = "<leader>p",
   cursor_keymap = "<leader>wi",
+  preview_placement = {
+    direction = "right",
+  },
   mouse_preview = {
     enabled = false,
     key = "<M-LeftMouse>",
@@ -267,6 +270,17 @@ local function normalize_cursor_keymap(value)
   return "<leader>wi"
 end
 
+local function normalize_preview_placement(opts)
+  opts = opts or {}
+
+  if not VALID_WEZTERM_SPLIT_DIRECTIONS[opts.direction] then
+    warn("viewim: invalid preview_placement.direction, using 'right'")
+    opts.direction = "right"
+  end
+
+  return opts
+end
+
 local function normalize_quiet_warnings(value)
   if type(value) == "boolean" then
     return value
@@ -336,6 +350,7 @@ function M.setup(opts)
   M.options.quiet_warnings = normalize_quiet_warnings(M.options.quiet_warnings)
   quiet_warnings = M.options.quiet_warnings
   M.options.cursor_keymap = normalize_cursor_keymap(M.options.cursor_keymap)
+  M.options.preview_placement = normalize_preview_placement(M.options.preview_placement)
   M.options.mouse_preview = normalize_mouse_preview(M.options.mouse_preview)
   M.options.explorer_auto_preview = normalize_explorer_auto_preview(M.options.explorer_auto_preview)
   M.options.markdown_auto_preview = normalize_markdown_auto_preview(M.options.markdown_auto_preview)
