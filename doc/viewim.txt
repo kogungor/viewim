@@ -330,6 +330,7 @@ Options: ~
 :ViewImageAtCursor      Preview markdown/html image source under cursor.
                         Supported patterns:
                         - `![alt](path-or-url)`
+                        - `![alt][id]` with `[id]: path-or-url`
                         - `<img src="path-or-url" ...>`
 
                                                         *:ViewImageEnable*
