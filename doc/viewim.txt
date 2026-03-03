@@ -110,6 +110,11 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       enabled = false,
       key = "<M-LeftMouse>",
     },
+    explorer_auto_preview = {
+      enabled = false,
+      debounce_ms = 180,
+      only_images = true,
+    },
     supported_extensions = {
       ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
     },
@@ -157,6 +162,21 @@ Options: ~
     Type: string
     Default: `"<M-LeftMouse>"`
     Mouse keymap used when `mouse_preview.enabled=true`.
+
+  `explorer_auto_preview.enabled`             *viewim-config-auto-preview-enabled*
+    Type: boolean
+    Default: `false`
+    Enables auto-preview while moving cursor in explorer buffers.
+
+  `explorer_auto_preview.debounce_ms`       *viewim-config-auto-preview-debounce*
+    Type: number
+    Default: `180`
+    Debounce delay in milliseconds for auto-preview triggers.
+
+  `explorer_auto_preview.only_images`       *viewim-config-auto-preview-images*
+    Type: boolean
+    Default: `true`
+    When true, skips non-image entries during auto-preview.
 
   `supported_extensions`                          *viewim-config-extensions*
     Type: table (list of strings)
@@ -270,6 +290,10 @@ The keymap is buffer-local and only active in supported file explorer buffers.
 
 Optional mouse preview keymap can be enabled with:
   `mouse_preview = { enabled = true, key = "<M-LeftMouse>" }`
+
+Optional auto-preview can be enabled with:
+  `explorer_auto_preview = { enabled = true, debounce_ms = 200,
+    only_images = true }`
 
 ==============================================================================
 7. INTEGRATIONS                                          *viewim-integrations*

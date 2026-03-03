@@ -3,37 +3,56 @@ local resolve = require("viewim.integrations.resolve")
 
 local M = {}
 
---- Get the file path under cursor in oil.nvim and preview it.
-function M.preview()
+local function maybe_notify(silent, message)
+  if not silent then
+    vim.notify(message, vim.log.levels.WARN)
+  end
+end
+
+--- Get the resolved candidate path under cursor in oil.nvim.
+--- @param opts table|nil { silent = boolean }
+--- @return string|nil
+function M.get_candidate_path(opts)
+  opts = opts or {}
+  local silent = opts.silent == true
+
   local ok, oil = pcall(require, "oil")
   if not ok then
-    vim.notify("viewim: oil.nvim is not loaded", vim.log.levels.WARN)
+    maybe_notify(silent, "viewim: oil.nvim is not loaded")
     return
   end
 
   local entry = oil.get_cursor_entry()
 
   if not entry then
-    vim.notify("viewim: no entry under cursor", vim.log.levels.WARN)
+    maybe_notify(silent, "viewim: no entry under cursor")
     return
   end
 
   if entry.type ~= "file" then
-    vim.notify("viewim: not a file", vim.log.levels.WARN)
+    maybe_notify(silent, "viewim: not a file")
     return
   end
 
   local dir = oil.get_current_dir()
   if not dir then
-    vim.notify("viewim: could not determine directory", vim.log.levels.WARN)
+    maybe_notify(silent, "viewim: could not determine directory")
     return
   end
 
-  local resolved = resolve.apply("oil", dir .. entry.name, {
+  return resolve.apply("oil", dir .. entry.name, {
     filetype = vim.bo.filetype,
     entry = entry,
     dir = dir,
   })
+end
+
+--- Get the file path under cursor in oil.nvim and preview it.
+function M.preview()
+  local resolved = M.get_candidate_path()
+  if not resolved then
+    return
+  end
 
   preview.preview(resolved)
 end

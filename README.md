@@ -17,6 +17,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Remote image preview via `:ViewImage https://...`
 - Runtime controls: `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`, `:ViewImageStatus`
 - Per-integration path resolver hooks (`resolve_path`) with safe fallback
+- Optional debounced auto-preview while moving cursor in explorer buffers
 - `:checkhealth viewim` to verify your setup
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`
 - Safer execution path: argv-based process launching and control-character path rejection
@@ -109,6 +110,11 @@ require("viewim").setup({
     enabled = false,
     key = "<M-LeftMouse>",
   },
+  explorer_auto_preview = {
+    enabled = false,
+    debounce_ms = 180,
+    only_images = true,
+  },
   supported_extensions = {
     ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
   },
@@ -141,6 +147,9 @@ require("viewim").setup({
 | `keymap` | `string` | `"<leader>p"` | Key to trigger image preview in file explorers |
 | `mouse_preview.enabled` | `bool` | `false` | Enable mouse-triggered preview in explorer buffers |
 | `mouse_preview.key` | `string` | `"<M-LeftMouse>"` | Mouse keymap used for preview when enabled |
+| `explorer_auto_preview.enabled` | `bool` | `false` | Auto-preview on cursor movement in explorer buffers |
+| `explorer_auto_preview.debounce_ms` | `number` | `180` | Debounce delay for auto-preview triggers |
+| `explorer_auto_preview.only_images` | `bool` | `true` | Skip non-image entries when auto-previewing |
 | `supported_extensions` | `table` | see above | List of image file extensions to recognize |
 | `integrations.nvim_tree.enabled` | `bool` | `true` | Enable nvim-tree keymap |
 | `integrations.oil.enabled` | `bool` | `true` | Enable oil.nvim keymap |
@@ -198,6 +207,18 @@ require("viewim").setup({
   mouse_preview = {
     enabled = true,
     key = "<M-LeftMouse>",
+  },
+})
+```
+
+Optional auto-preview on cursor movement in explorer buffers:
+
+```lua
+require("viewim").setup({
+  explorer_auto_preview = {
+    enabled = true,
+    debounce_ms = 200,
+    only_images = true,
   },
 })
 ```
