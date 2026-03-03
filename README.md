@@ -19,6 +19,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Per-integration path resolver hooks (`resolve_path`) with safe fallback
 - Optional debounced auto-preview while moving cursor in explorer buffers
 - WezTerm split placement presets (direction and size percent)
+- Experimental internal rendering mode for kitty with fallback to launcher mode
 - `:checkhealth viewim` to verify your setup
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`
 - Safer execution path: argv-based process launching and control-character path rejection
@@ -143,6 +144,9 @@ require("viewim").setup({
     cache_dir = vim.fn.stdpath("cache") .. "/viewim/remote",
     require_https = false,
   },
+  experimental = {
+    internal_render = false,
+  },
 })
 ```
 
@@ -171,6 +175,7 @@ require("viewim").setup({
 | `remote.max_bytes` | `number` | `10485760` | Maximum remote download size in bytes |
 | `remote.cache_dir` | `string` | `stdpath("cache") .. "/viewim/remote"` | Cache directory for downloaded remote images |
 | `remote.require_https` | `bool` | `false` | If true, reject `http://` URLs and allow only `https://` |
+| `experimental.internal_render` | `bool` | `false` | Try experimental internal rendering for kitty before launcher fallback |
 
 Notes:
 - `supported_extensions` entries are normalized to lowercase; both `"png"` and `".png"` are accepted.
@@ -232,6 +237,18 @@ require("viewim").setup({
 })
 ```
 
+Experimental internal render mode (kitty only, with fallback):
+
+```lua
+require("viewim").setup({
+  experimental = {
+    internal_render = true,
+  },
+})
+```
+
+If internal rendering is unavailable or fails, viewim falls back to normal launcher behavior.
+
 ### 📄 From any buffer
 
 Run the command:
@@ -248,6 +265,7 @@ If the current buffer is an image file, it previews it.
 - `:ViewImageDisable` - disable previews
 - `:ViewImageToggle` - toggle enabled/disabled state
 - `:ViewImageStatus` - show enabled state, detected terminal, and remote status
+  (also shows experimental internal mode state)
 
 You can also pass an explicit path:
 
@@ -276,6 +294,7 @@ Run `:checkhealth viewim` to verify:
 - Native opener available (for ghostty)
 - Optional integrations loadable
 - `.avif` enabled status and compatibility warning
+- experimental internal-render capability state
 
 If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above.
 
@@ -304,6 +323,7 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
 - `lua/viewim/url.lua` — URL parsing helpers (`scheme`, extension hints)
 - `lua/viewim/download.lua` — remote downloader with `curl` and guardrails
 - `lua/viewim/preview.lua` — orchestration (`enabled check -> local/remote resolve -> validate -> dispatch`)
+- `lua/viewim/renderers/*.lua` — experimental internal renderers (kitty prototype)
 - `lua/viewim/detect.lua` — terminal/platform/command detection helpers
 - `lua/viewim/runners/{kitty,wezterm,ghostty}.lua` — terminal-specific command runners
 - `lua/viewim/integrations/{nvim_tree,oil,neo_tree,buffer,resolve}.lua` — explorer adapters and resolver hook application

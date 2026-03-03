@@ -25,6 +25,9 @@ M.defaults = {
     debounce_ms = 180,
     only_images = true,
   },
+  experimental = {
+    internal_render = false,
+  },
   supported_extensions = {
     ".bmp",
     ".jpg",
@@ -248,6 +251,14 @@ local function normalize_explorer_auto_preview(opts)
   return opts
 end
 
+local function normalize_experimental(opts)
+  opts = opts or {}
+  if type(opts.internal_render) ~= "boolean" then
+    opts.internal_render = false
+  end
+  return opts
+end
+
 function M.setup(opts)
   opts = opts or {}
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)
@@ -255,6 +266,7 @@ function M.setup(opts)
   M.options.enabled = normalize_enabled(M.options.enabled)
   M.options.mouse_preview = normalize_mouse_preview(M.options.mouse_preview)
   M.options.explorer_auto_preview = normalize_explorer_auto_preview(M.options.explorer_auto_preview)
+  M.options.experimental = normalize_experimental(M.options.experimental)
   M.options.integrations = normalize_integrations(M.options.integrations)
   M.options.supported_extensions = normalize_extensions(M.options.supported_extensions)
   M.options.kitty = normalize_kitty(M.options.kitty)

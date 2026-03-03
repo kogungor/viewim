@@ -188,7 +188,11 @@ function M.status()
   local enabled = config.options.enabled and "enabled" or "disabled"
   local term = detect.get_terminal() or "unsupported"
   local remote = (config.options.remote and config.options.remote.enabled) and "on" or "off"
-  vim.notify("viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote, vim.log.levels.INFO)
+  local internal = (config.options.experimental and config.options.experimental.internal_render) and "on" or "off"
+  vim.notify(
+    "viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote .. " | internal: " .. internal,
+    vim.log.levels.INFO
+  )
 end
 
 --- Preview an image. Detects context automatically or accepts a path.

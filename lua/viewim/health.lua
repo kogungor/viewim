@@ -3,6 +3,7 @@ local M = {}
 function M.check()
   vim.health.start("viewim")
   local config = require("viewim.config")
+  local renderers = require("viewim.renderers")
   if not config.options or vim.tbl_isempty(config.options) then
     config.setup({})
   end
@@ -136,6 +137,20 @@ function M.check()
     )
   else
     vim.health.info("'.avif' is not enabled in supported_extensions")
+  end
+
+  vim.health.start("viewim experimental")
+  local experimental = cfg.experimental or {}
+  if experimental.internal_render then
+    vim.health.info("experimental.internal_render is enabled")
+    local supported, reason = renderers.is_supported(term)
+    if supported then
+      vim.health.ok("internal render capability detected")
+    else
+      vim.health.warn("internal render not available: " .. (reason or "unknown reason"))
+    end
+  else
+    vim.health.info("experimental.internal_render is disabled")
   end
 end
 

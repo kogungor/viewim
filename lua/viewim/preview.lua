@@ -3,6 +3,7 @@ local detect = require("viewim.detect")
 local path = require("viewim.path")
 local download = require("viewim.download")
 local url = require("viewim.url")
+local renderers = require("viewim.renderers")
 local kitty_runner = require("viewim.runners.kitty")
 local wezterm_runner = require("viewim.runners.wezterm")
 local ghostty_runner = require("viewim.runners.ghostty")
@@ -44,6 +45,22 @@ end
 
 local function dispatch_preview(resolved)
   local term = detect.get_terminal()
+
+  local attempted, ok, err = renderers.try_render(
+    resolved,
+    term,
+    config.options and config.options.experimental
+  )
+  if attempted and ok then
+    return
+  end
+  if attempted and not ok then
+    vim.notify(
+      "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or ""),
+      vim.log.levels.WARN
+    )
+  end
+
   if term == "kitty" then
     run_or_notify(kitty_runner.run(resolved, config.options and config.options.kitty))
   elseif term == "wezterm" then

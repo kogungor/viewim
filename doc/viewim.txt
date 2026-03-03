@@ -28,6 +28,8 @@ native image display capabilities.
 
 It also supports remote URL previews (`http://` / `https://`) and runtime
 enable/disable controls.
+Experimental internal rendering mode is available for kitty with automatic
+fallback to launcher mode if internal rendering is unavailable.
 
 Supported terminals:
 - kitty (via kitten icat)
@@ -141,6 +143,9 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       max_bytes = 10485760,
       cache_dir = vim.fn.stdpath("cache") .. "/viewim/remote",
       require_https = false,
+    },
+    experimental = {
+      internal_render = false,
     },
   })
 <
@@ -270,6 +275,12 @@ Options: ~
     Default: `false`
     If true, rejects `http://` URLs and allows only `https://`.
 
+  `experimental.internal_render`               *viewim-config-experimental-internal*
+    Type: boolean
+    Default: `false`
+    Enables experimental internal rendering for kitty before launcher fallback.
+    If unsupported or failed, viewim falls back to normal launcher mode.
+
 ==============================================================================
 5. COMMANDS                                                *viewim-commands*
 
@@ -294,7 +305,7 @@ Options: ~
 
                                                         *:ViewImageStatus*
 :ViewImageStatus        Show current status (enabled state, terminal,
-                        and remote preview state).
+                        remote preview state, and experimental internal mode).
 
 ==============================================================================
 6. KEYMAPS                                                  *viewim-keymaps*
@@ -346,6 +357,7 @@ viewim is organized by responsibility:
 - `lua/viewim/path.lua`: path resolution and control-character checks
 - `lua/viewim/url.lua`: URL helpers (`scheme`, extension hints)
 - `lua/viewim/download.lua`: remote downloader with timeout/size limits
+- `lua/viewim/renderers/*.lua`: experimental internal renderers
 - `lua/viewim/preview.lua`: orchestrator
   (`enabled -> local/remote handling -> validate -> detect -> dispatch`)
 - `lua/viewim/detect.lua`: terminal/platform detection helpers
@@ -376,6 +388,7 @@ Checks performed:
 - Native opener available (for ghostty)
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)
 - `.avif` enabled status and compatibility warning
+- experimental internal-render capability state
 
 ============================================================================== 
 10. TROUBLESHOOTING                             *viewim-troubleshooting*
@@ -416,6 +429,10 @@ Relative path not found: ~
 
 `plugin is disabled`: ~
   Run `:ViewImageEnable` or `:ViewImageToggle` to re-enable previews.
+
+`internal render failed, falling back to launcher`: ~
+  Experimental internal mode could not render in current environment.
+  viewim falls back to normal launcher preview flow.
 
 ============================================================================== 
  vim:tw=78:ts=8:ft=help:norl:
