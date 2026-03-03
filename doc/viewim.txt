@@ -157,6 +157,12 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       cache_dir = vim.fn.stdpath("cache") .. "/viewim/remote",
       require_https = false,
     },
+    search = {
+      enabled = true,
+      preferred_picker = "auto",
+      max_results = 500,
+      include_hidden = false,
+    },
     experimental = {
       internal_render = false,
     },
@@ -330,6 +336,27 @@ Options: ~
     Default: `false`
     If true, rejects `http://` URLs and allows only `https://`.
 
+  `search.enabled`                               *viewim-config-search-enabled*
+    Type: boolean
+    Default: `true`
+    Enables project image search command (`:SearchImage`).
+
+  `search.preferred_picker`                      *viewim-config-search-picker*
+    Type: string
+    Default: `"auto"`
+    Picker preference for search UI (`auto`, `telescope`, `snacks`, `builtin`).
+    MVP currently uses builtin selector path.
+
+  `search.max_results`                           *viewim-config-search-max-results*
+    Type: number
+    Default: `500`
+    Maximum number of returned search results.
+
+  `search.include_hidden`                        *viewim-config-search-hidden*
+    Type: boolean
+    Default: `false`
+    Includes hidden image files in search when true.
+
   `experimental.internal_render`               *viewim-config-experimental-internal*
     Type: boolean
     Default: `false`
@@ -375,6 +402,10 @@ Options: ~
                                                         *:ViewImageStatus*
 :ViewImageStatus        Show current status (enabled state, terminal,
                         remote preview state, and experimental internal mode).
+
+                                                           *:SearchImage*
+:SearchImage [query]    Search project images and preview selected result.
+                        Optional `[query]` pre-filters results.
 
 ==============================================================================
 6. KEYMAPS                                                  *viewim-keymaps*
@@ -427,7 +458,8 @@ viewim is organized by responsibility:
 - `plugin/viewim.lua`: registers user commands (`:ViewImage`,
   `:ViewImageAtCursor`,
   `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`,
-  `:ViewImageStatus`)
+  `:ViewImageStatus`, `:SearchImage`)
+- `lua/viewim/search.lua`: project image discovery and query filtering backend
 - `lua/viewim/cursor.lua`: extracts markdown/html image source under cursor
 - `lua/viewim/init.lua`: public API, runtime controls, and keymap wiring
 - `lua/viewim/config.lua`: defaults + normalized/validated config

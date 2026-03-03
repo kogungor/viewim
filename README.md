@@ -86,6 +86,13 @@ require("viewim").setup({
     cache_dir = vim.fn.stdpath("cache") .. "/viewim/remote",
     require_https = false,
   },
+
+  search = {
+    enabled = true,
+    preferred_picker = "auto", -- auto|telescope|snacks|builtin (adapters staged)
+    max_results = 500,
+    include_hidden = false,
+  },
 })
 ```
 
@@ -100,6 +107,7 @@ require("viewim").setup({
 - `:ViewImage /path/to/file.png`
 - `:ViewImage https://example.com/image.png`
 - `:ViewImageAtCursor` -> preview markdown/html image source under cursor
+- `:SearchImage [query]` -> search project images and preview selected result
 - `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`, `:ViewImageStatus`
 - `:checkhealth viewim`
 
@@ -129,6 +137,8 @@ require("viewim").setup({
 - Vimdoc file: `doc/viewim.txt`
 
 For full option reference, troubleshooting, architecture, and all edge-case notes, use vimdoc.
+
+Current search behavior uses builtin selector (`vim.ui.select`) in MVP stage.
 
 ## 📜 License
 

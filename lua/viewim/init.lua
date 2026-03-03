@@ -1,7 +1,9 @@
 local config = require("viewim.config")
 local cursor = require("viewim.cursor")
 local detect = require("viewim.detect")
+local notify = require("viewim.notify")
 local preview = require("viewim.preview")
+local search = require("viewim.search")
 local uv = vim.uv or vim.loop
 
 local M = {}
@@ -320,6 +322,36 @@ end
 --- Supports markdown image syntax and HTML img tags.
 function M.view_at_cursor()
   cursor.preview_at_cursor()
+end
+
+--- Search project images and select one to preview.
+--- @param query string|nil
+function M.search_images(query)
+  ensure_config_initialized()
+
+  local opts = config.options.search or {}
+  if opts.enabled == false then
+    notify.warn("viewim: search is disabled (set search.enabled=true)")
+    return
+  end
+
+  local items = search.find(query)
+  if #items == 0 then
+    notify.warn("viewim: no images found for search query")
+    return
+  end
+
+  vim.ui.select(items, {
+    prompt = "SearchImage> ",
+    format_item = function(item)
+      return item.label
+    end,
+  }, function(choice)
+    if not choice then
+      return
+    end
+    preview.preview(choice.path)
+  end)
 end
 
 return M
