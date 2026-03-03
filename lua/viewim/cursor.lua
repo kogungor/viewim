@@ -189,6 +189,10 @@ local function invalidate_buffer_cache(bufnr)
   SOURCE_CACHE[bufnr] = nil
 end
 
+local function invalidate_all_cache()
+  SOURCE_CACHE = {}
+end
+
 local function setup_cache_invalidation()
   if vim.g.viewim_cursor_cache_augroup_created then
     return
@@ -206,6 +210,13 @@ local function setup_cache_invalidation()
     group = group,
     callback = function(args)
       invalidate_buffer_cache(args.buf)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "DirChanged" }, {
+    group = group,
+    callback = function()
+      invalidate_all_cache()
     end,
   })
 
