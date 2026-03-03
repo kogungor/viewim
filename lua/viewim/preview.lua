@@ -65,15 +65,15 @@ local function dispatch_preview(resolved)
       exp.internal_render = false
       exp._auto_disabled_reason = err or "controlling terminal unavailable"
       vim.notify(
-        "viewim: internal render auto-disabled for this session (no controlling terminal)",
+        "viewim: internal render unavailable (no controlling terminal), auto-disabled for this session",
+        vim.log.levels.WARN
+      )
+    else
+      vim.notify(
+        "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or ""),
         vim.log.levels.WARN
       )
     end
-
-    vim.notify(
-      "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or ""),
-      vim.log.levels.WARN
-    )
   end
 
   if term == "kitty" then
