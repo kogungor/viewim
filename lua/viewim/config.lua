@@ -99,6 +99,9 @@ M.defaults = {
     preferred_picker = "auto",
     max_results = 500,
     include_hidden = false,
+    selection_preview = true,
+    selection_preview_debounce_ms = 120,
+    space_action = "large_preview",
   },
 }
 
@@ -290,6 +293,22 @@ local function normalize_search(opts)
 
   if type(opts.include_hidden) ~= "boolean" then
     opts.include_hidden = false
+  end
+
+  if type(opts.selection_preview) ~= "boolean" then
+    opts.selection_preview = true
+  end
+
+  if type(opts.selection_preview_debounce_ms) ~= "number" or opts.selection_preview_debounce_ms < 20 then
+    warn("viewim: invalid search.selection_preview_debounce_ms, using 120")
+    opts.selection_preview_debounce_ms = 120
+  else
+    opts.selection_preview_debounce_ms = math.floor(opts.selection_preview_debounce_ms)
+  end
+
+  if opts.space_action ~= "large_preview" and opts.space_action ~= "preview" then
+    warn("viewim: invalid search.space_action, using 'large_preview'")
+    opts.space_action = "large_preview"
   end
 
   return opts

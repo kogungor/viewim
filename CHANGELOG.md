@@ -14,3 +14,5 @@ All notable changes to this project are documented here.
 
 - Development/release process docs now use `dev` as integration branch and `main` as release branch.
 - CI now runs on `dev` and `main` for both push and pull request events.
+- `:SearchImage` adds selection-preview hooks and `<Space>` action routing (`large_preview` or `preview`) in supported picker backends.
+- `:SearchImage` now reports which picker backend is active (`telescope`, `snacks`, `builtin`).
