@@ -6,6 +6,13 @@ local VALID_KITTY_LAUNCH_TYPES = {
   window = true,
 }
 
+local VALID_WEZTERM_SPLIT_DIRECTIONS = {
+  left = true,
+  right = true,
+  top = true,
+  bottom = true,
+}
+
 M.defaults = {
   enabled = true,
   keymap = "<leader>p",
@@ -44,6 +51,10 @@ M.defaults = {
   kitty = {
     listen_on = nil,
     launch_type = "os-window",
+  },
+  wezterm = {
+    split_direction = "right",
+    split_percent = nil,
   },
   ghostty = {
     mode = "external",
@@ -149,6 +160,27 @@ local function normalize_ghostty(opts)
   return opts
 end
 
+local function normalize_wezterm(opts)
+  opts = opts or {}
+
+  if not VALID_WEZTERM_SPLIT_DIRECTIONS[opts.split_direction] then
+    vim.notify("viewim: invalid wezterm.split_direction, using 'right'", vim.log.levels.WARN)
+    opts.split_direction = "right"
+  end
+
+  if opts.split_percent ~= nil then
+    local n = tonumber(opts.split_percent)
+    if not n or n < 1 or n > 99 then
+      vim.notify("viewim: invalid wezterm.split_percent, ignoring", vim.log.levels.WARN)
+      opts.split_percent = nil
+    else
+      opts.split_percent = math.floor(n)
+    end
+  end
+
+  return opts
+end
+
 local function normalize_remote(opts)
   opts = opts or {}
 
@@ -226,6 +258,7 @@ function M.setup(opts)
   M.options.integrations = normalize_integrations(M.options.integrations)
   M.options.supported_extensions = normalize_extensions(M.options.supported_extensions)
   M.options.kitty = normalize_kitty(M.options.kitty)
+  M.options.wezterm = normalize_wezterm(M.options.wezterm)
   M.options.ghostty = normalize_ghostty(M.options.ghostty)
   M.options.remote = normalize_remote(M.options.remote)
 

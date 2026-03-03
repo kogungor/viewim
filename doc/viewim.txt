@@ -127,6 +127,10 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       listen_on = nil,
       launch_type = "os-window",
     },
+    wezterm = {
+      split_direction = "right",
+      split_percent = nil,
+    },
     ghostty = {
       mode = "external",
       opener = "auto",
@@ -216,6 +220,18 @@ Options: ~
     Default: `"os-window"`
     Launch target for kitty previews (`os-window`, `tab`, `window`).
     Invalid values fall back to `"os-window"` with a warning.
+
+  `wezterm.split_direction`                     *viewim-config-wezterm-direction*
+    Type: string
+    Default: `"right"`
+    WezTerm split direction (`left`, `right`, `top`, `bottom`).
+    Invalid values fall back to `"right"`.
+
+  `wezterm.split_percent`                         *viewim-config-wezterm-percent*
+    Type: number|nil
+    Default: `nil`
+    Optional pane size percentage for WezTerm split (`1..99`).
+    Invalid values are ignored.
 
   `ghostty.mode`                                  *viewim-config-ghostty-mode*
     Type: string

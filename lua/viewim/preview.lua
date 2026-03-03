@@ -47,7 +47,7 @@ local function dispatch_preview(resolved)
   if term == "kitty" then
     run_or_notify(kitty_runner.run(resolved, config.options and config.options.kitty))
   elseif term == "wezterm" then
-    run_or_notify(wezterm_runner.run(resolved))
+    run_or_notify(wezterm_runner.run(resolved, config.options and config.options.wezterm))
   elseif term == "ghostty" then
     run_or_notify(ghostty_runner.run(resolved, config.options and config.options.ghostty))
   else
@@ -128,7 +128,7 @@ function M._preview_kitty(path_value)
 end
 
 function M._preview_wezterm(path_value)
-  run_or_notify(wezterm_runner.run(path_value))
+  run_or_notify(wezterm_runner.run(path_value, config.options and config.options.wezterm))
 end
 
 function M._preview_ghostty(path_value)

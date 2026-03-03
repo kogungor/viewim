@@ -18,6 +18,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Runtime controls: `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`, `:ViewImageStatus`
 - Per-integration path resolver hooks (`resolve_path`) with safe fallback
 - Optional debounced auto-preview while moving cursor in explorer buffers
+- WezTerm split placement presets (direction and size percent)
 - `:checkhealth viewim` to verify your setup
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`
 - Safer execution path: argv-based process launching and control-character path rejection
@@ -127,6 +128,10 @@ require("viewim").setup({
     listen_on = nil,
     launch_type = "os-window",
   },
+  wezterm = {
+    split_direction = "right", -- left|right|top|bottom
+    split_percent = nil, -- 1..99 or nil
+  },
   ghostty = {
     mode = "external",
     opener = "auto",
@@ -157,6 +162,8 @@ require("viewim").setup({
 | `integrations.<name>.resolve_path` | `function\|nil` | `nil` | Optional hook to rewrite selected path before preview |
 | `kitty.listen_on` | `string\|nil` | `nil` | Kitty remote socket (fallback to `$KITTY_LISTEN_ON`) |
 | `kitty.launch_type` | `string` | `"os-window"` | Kitty launch target (`os-window`, `tab`, `window`) |
+| `wezterm.split_direction` | `string` | `"right"` | WezTerm split direction (`left`, `right`, `top`, `bottom`) |
+| `wezterm.split_percent` | `number\|nil` | `nil` | Optional pane size percentage (`1..99`) |
 | `ghostty.mode` | `string` | `"external"` | Ghostty preview mode (currently `external`) |
 | `ghostty.opener` | `string` | `"auto"` | External opener command (`auto`, `open`, `xdg-open`, or custom) |
 | `remote.enabled` | `bool` | `true` | Enable remote URL previews (`http://` / `https://`) |
@@ -169,6 +176,8 @@ Notes:
 - `supported_extensions` entries are normalized to lowercase; both `"png"` and `".png"` are accepted.
 - Invalid extension entries are ignored with a warning.
 - Invalid `kitty.launch_type` falls back to `"os-window"` with a warning.
+- Invalid `wezterm.split_direction` falls back to `"right"`.
+- Invalid `wezterm.split_percent` is ignored.
 - Unsupported `ghostty.mode` falls back to `"external"` with a warning.
 - `.avif` is recognized by viewim, but actual rendering depends on terminal/image codec support.
 
@@ -276,6 +285,7 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
   to open the image in a new kitty OS window.
 - **wezterm** — runs `wezterm cli split-pane -- wezterm imgcat <file>`
   to open the image in a new wezterm pane.
+  `wezterm.split_direction` and `wezterm.split_percent` control pane placement.
 - **ghostty** — opens the image with your OS native viewer:
   - macOS: `open <file>`
   - Linux: `xdg-open <file>`
