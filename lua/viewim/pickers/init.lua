@@ -40,15 +40,15 @@ function M.open(items, opts)
   opts = opts or {}
   local name, backend = M.resolve_backend(opts.preferred_picker or "auto")
   if not backend then
-    return false, "no picker backend available"
+    return false, "no picker backend available", nil
   end
 
   local ok, err = backend.open(items, opts)
   if not ok then
-    return false, err or ("failed to open picker backend: " .. name)
+    return false, err or ("failed to open picker backend: " .. name), name
   end
 
-  return true
+  return true, nil, name
 end
 
 return M

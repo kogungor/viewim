@@ -342,17 +342,62 @@ function M.search_images(query)
     return
   end
 
-  local ok, err = pickers.open(items, {
+  local preview_seq = 0
+
+  local function schedule_selection_preview(choice)
+    if not opts.selection_preview then
+      return
+    end
+    if not choice or not choice.path then
+      return
+    end
+
+    preview_seq = preview_seq + 1
+    local seq = preview_seq
+    vim.defer_fn(function()
+      if seq ~= preview_seq then
+        return
+      end
+      preview.preview(choice.path)
+    end, opts.selection_preview_debounce_ms or 120)
+  end
+
+  local function handle_alt_action(choice)
+    if not choice or not choice.path then
+      return
+    end
+
+    if opts.space_action == "preview" then
+      preview.preview(choice.path)
+      return
+    end
+
+    preview.preview_large(choice.path)
+  end
+
+  local ok, err, backend_name = pickers.open(items, {
     preferred_picker = opts.preferred_picker or "auto",
     prompt = "SearchImage> ",
     on_select = function(choice)
+      preview_seq = preview_seq + 1
       preview.preview(choice.path)
+    end,
+    on_change = function(choice)
+      schedule_selection_preview(choice)
+    end,
+    on_alt_select = function(choice)
+      handle_alt_action(choice)
     end,
   })
 
-  if not ok then
-    notify.error("viewim: failed to open image picker" .. (err and (": " .. err) or ""))
+  if ok then
+    if backend_name then
+      notify.info("viewim: SearchImage picker backend: " .. backend_name)
+    end
+    return
   end
+
+  notify.error("viewim: failed to open image picker" .. (err and (": " .. err) or ""))
 end
 
 return M

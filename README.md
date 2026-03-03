@@ -92,6 +92,9 @@ require("viewim").setup({
     preferred_picker = "auto", -- auto|telescope|snacks|builtin
     max_results = 500,
     include_hidden = false,
+    selection_preview = true,
+    selection_preview_debounce_ms = 120,
+    space_action = "large_preview", -- large_preview|preview
   },
 })
 ```
@@ -139,6 +142,11 @@ require("viewim").setup({
 For full option reference, troubleshooting, architecture, and all edge-case notes, use vimdoc.
 
 Search picker backend is selected by `search.preferred_picker` with fallback order.
+
+Search actions:
+- selection change preview (backend-dependent, enabled by `search.selection_preview`)
+- `<Space>` action inside picker triggers `search.space_action`
+- `:SearchImage` reports selected picker backend (for example `telescope`, `snacks`, `builtin`)
 
 ## 📜 License
 
