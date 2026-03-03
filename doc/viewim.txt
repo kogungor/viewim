@@ -345,6 +345,7 @@ Options: ~
     Type: string
     Default: `"auto"`
     Picker preference for search UI (`auto`, `telescope`, `snacks`, `builtin`).
+    Falls back automatically to next available backend.
     MVP currently uses builtin selector path.
 
   `search.max_results`                           *viewim-config-search-max-results*
@@ -460,6 +461,7 @@ viewim is organized by responsibility:
   `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`,
   `:ViewImageStatus`, `:SearchImage`)
 - `lua/viewim/search.lua`: project image discovery and query filtering backend
+- `lua/viewim/pickers/*.lua`: picker adapters (`telescope`, `snacks`, `builtin`)
 - `lua/viewim/cursor.lua`: extracts markdown/html image source under cursor
 - `lua/viewim/init.lua`: public API, runtime controls, and keymap wiring
 - `lua/viewim/config.lua`: defaults + normalized/validated config

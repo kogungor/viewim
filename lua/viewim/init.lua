@@ -2,6 +2,7 @@ local config = require("viewim.config")
 local cursor = require("viewim.cursor")
 local detect = require("viewim.detect")
 local notify = require("viewim.notify")
+local pickers = require("viewim.pickers")
 local preview = require("viewim.preview")
 local search = require("viewim.search")
 local uv = vim.uv or vim.loop
@@ -341,6 +342,17 @@ function M.search_images(query)
     return
   end
 
+  local ok, err = pickers.open(items, {
+    preferred_picker = opts.preferred_picker or "auto",
+    prompt = "SearchImage> ",
+    on_select = function(choice)
+      preview.preview(choice.path)
+    end,
+  })
+
+  if not ok then
+    notify.error("viewim: failed to open image picker" .. (err and (": " .. err) or ""))
+  end
   vim.ui.select(items, {
     prompt = "SearchImage> ",
     format_item = function(item)
