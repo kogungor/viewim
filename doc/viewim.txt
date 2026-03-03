@@ -334,6 +334,11 @@ Options: ~
                         - `<img src="path-or-url" ...>` (single-line or multi-line)
                         If cursor is not directly on image syntax, nearest image
                         source is selected from a small local scan window.
+                        Source resolution order:
+                        - URL (`http://`, `https://`) as-is
+                        - absolute path (`/path/...`) with cwd fallback
+                        - file-relative path resolved against current file dir
+                        - fallback to original extracted source if unresolved
 
                                                         *:ViewImageEnable*
 :ViewImageEnable        Enable viewim previews.

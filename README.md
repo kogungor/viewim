@@ -321,6 +321,12 @@ Preview markdown/html image source under cursor:
 If cursor is not directly on an image token, viewim picks the nearest image source
 within a small local scan window.
 
+Path resolution order for `:ViewImageAtCursor`:
+- URL (`http://`, `https://`) as-is
+- absolute path (`/path/...`) with root-relative cwd fallback
+- file-relative path resolved against current markdown/html file directory
+- fallback to original extracted source when file cannot be resolved
+
 Supported cursor patterns:
 - Markdown image: `![alt](path-or-url)`
 - Markdown reference image: `![alt][id]` with `[id]: path-or-url`

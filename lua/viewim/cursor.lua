@@ -1,8 +1,11 @@
 local notify = require("viewim.notify")
+local url = require("viewim.url")
 
 local M = {}
 local HTML_SCAN_RADIUS = 20
 local NEAREST_SCAN_RADIUS = 8
+local CACHE_MAX_LINES = 5000
+local SOURCE_CACHE = {}
 
 local function col_in_range(col, s, e)
   return col >= s and col <= e
@@ -99,6 +102,114 @@ local function maybe_map_root_relative(path_value)
   end
 
   return path_value
+end
+
+local function resolve_source_path(bufnr, source)
+  if type(source) ~= "string" then
+    return source
+  end
+
+  local value = vim.trim(source)
+  if value == "" then
+    return value
+  end
+
+  if url.is_http_url(value) then
+    return value
+  end
+
+  local scheme = url.get_scheme(value)
+  if scheme and scheme ~= "http" and scheme ~= "https" then
+    return value
+  end
+
+  if value:sub(1, 1) == "/" then
+    return maybe_map_root_relative(value)
+  end
+
+  if vim.fn.filereadable(value) == 1 then
+    return vim.fs.normalize(value)
+  end
+
+  local doc_path = vim.api.nvim_buf_get_name(bufnr)
+  if doc_path ~= "" then
+    local doc_dir = vim.fs.dirname(doc_path)
+    if doc_dir and doc_dir ~= "" then
+      local rel = vim.fs.normalize(doc_dir .. "/" .. value)
+      if vim.fn.filereadable(rel) == 1 then
+        return rel
+      end
+    end
+  end
+
+  return value
+end
+
+local function cache_key(row, col)
+  return tostring(row) .. ":" .. tostring(col)
+end
+
+local function ensure_buffer_cache(bufnr)
+  local cache = SOURCE_CACHE[bufnr]
+  if cache then
+    return cache
+  end
+
+  cache = {
+    values = {},
+    order = {},
+  }
+  SOURCE_CACHE[bufnr] = cache
+  return cache
+end
+
+local function cache_get(bufnr, row, col)
+  local cache = SOURCE_CACHE[bufnr]
+  if not cache then
+    return nil
+  end
+  return cache.values[cache_key(row, col)]
+end
+
+local function cache_set(bufnr, row, col, value)
+  local cache = ensure_buffer_cache(bufnr)
+  local key = cache_key(row, col)
+  if cache.values[key] == nil then
+    table.insert(cache.order, key)
+  end
+  cache.values[key] = value
+
+  if #cache.order > CACHE_MAX_LINES then
+    local evict = table.remove(cache.order, 1)
+    cache.values[evict] = nil
+  end
+end
+
+local function invalidate_buffer_cache(bufnr)
+  SOURCE_CACHE[bufnr] = nil
+end
+
+local function setup_cache_invalidation()
+  if vim.g.viewim_cursor_cache_augroup_created then
+    return
+  end
+
+  local group = vim.api.nvim_create_augroup("viewim_cursor_cache", { clear = true })
+  vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufWritePost" }, {
+    group = group,
+    callback = function(args)
+      invalidate_buffer_cache(args.buf)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "BufWipeout", "BufDelete" }, {
+    group = group,
+    callback = function(args)
+      invalidate_buffer_cache(args.buf)
+    end,
+  })
+
+  vim.g.viewim_cursor_cache_augroup_created = true
 end
 
 local function markdown_image_under_cursor(line, col)
@@ -421,10 +532,18 @@ end
 --- @return string|nil
 --- @return string|nil
 function M.get_image_source_under_cursor()
+  setup_cache_invalidation()
+
   local pos = vim.api.nvim_win_get_cursor(0)
   local bufnr = vim.api.nvim_get_current_buf()
   local row = pos[1]
   local col = pos[2] + 1
+
+  local cached = cache_get(bufnr, row, col)
+  if cached ~= nil then
+    return cached.src, cached.err
+  end
+
   local line = vim.api.nvim_get_current_line()
 
   local src = markdown_image_under_cursor(line, col)
@@ -433,7 +552,9 @@ function M.get_image_source_under_cursor()
     if ref_id then
       src = resolve_markdown_reference(ref_id, bufnr)
       if not src then
-        return nil, "viewim: markdown image reference not found: [" .. ref_id .. "]"
+        local err = "viewim: markdown image reference not found: [" .. ref_id .. "]"
+        cache_set(bufnr, row, col, { src = nil, err = err })
+        return nil, err
       end
     end
   end
@@ -461,10 +582,14 @@ function M.get_image_source_under_cursor()
   end
 
   if not src then
-    return nil, "viewim: no markdown/html image source near cursor"
+    local err = "viewim: no markdown/html image source near cursor"
+    cache_set(bufnr, row, col, { src = nil, err = err })
+    return nil, err
   end
 
-  return maybe_map_root_relative(src), nil
+  local resolved = resolve_source_path(bufnr, src)
+  cache_set(bufnr, row, col, { src = resolved, err = nil })
+  return resolved, nil
 end
 
 function M.preview_at_cursor()
