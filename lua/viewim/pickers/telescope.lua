@@ -19,6 +19,19 @@ function M.open(items, opts)
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
 
+  local function notify_change(prompt_bufnr)
+    if type(opts.on_change) ~= "function" then
+      return
+    end
+
+    vim.schedule(function()
+      local selection = action_state.get_selected_entry()
+      if selection and selection.value then
+        opts.on_change(selection.value)
+      end
+    end)
+  end
+
   pickers.new({}, {
     prompt_title = opts.prompt or "SearchImage",
     finder = finders.new_table({
@@ -55,6 +68,24 @@ function M.open(items, opts)
           opts.on_alt_select(selection.value)
         end
       end)
+
+      local function map_change(mode, lhs, move_action)
+        map(mode, lhs, function()
+          move_action(prompt_bufnr)
+          notify_change(prompt_bufnr)
+        end)
+      end
+
+      map_change("i", "<Down>", actions.move_selection_next)
+      map_change("i", "<Up>", actions.move_selection_previous)
+      map_change("i", "<C-n>", actions.move_selection_next)
+      map_change("i", "<C-p>", actions.move_selection_previous)
+      map_change("n", "j", actions.move_selection_next)
+      map_change("n", "k", actions.move_selection_previous)
+      map_change("n", "<Down>", actions.move_selection_next)
+      map_change("n", "<Up>", actions.move_selection_previous)
+
+      notify_change(prompt_bufnr)
 
       return true
     end,
