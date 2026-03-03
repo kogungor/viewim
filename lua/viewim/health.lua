@@ -118,6 +118,25 @@ function M.check()
       vim.health.error("remote cache dir is not configured")
     end
   end
+
+  vim.health.start("viewim format support")
+  local extensions = cfg.supported_extensions or {}
+  local has_avif = false
+  for _, ext in ipairs(extensions) do
+    if ext == ".avif" then
+      has_avif = true
+      break
+    end
+  end
+
+  if has_avif then
+    vim.health.info("'.avif' is enabled in supported_extensions")
+    vim.health.warn(
+      "AVIF rendering depends on terminal/image codec support and may fail on some systems"
+    )
+  else
+    vim.health.info("'.avif' is not enabled in supported_extensions")
+  end
 end
 
 return M
