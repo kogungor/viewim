@@ -44,43 +44,69 @@ local function run_or_notify(ok, err)
   vim.notify(err or "viewim: preview command failed", vim.log.levels.ERROR)
 end
 
-local function dispatch_preview(resolved)
-  local term = detect.get_terminal()
+local function merged_options(mode_opts)
+  local options = config.options or {}
+  local kitty_opts = vim.deepcopy(options.kitty or {})
+  local wezterm_opts = vim.deepcopy(options.wezterm or {})
+  local ghostty_opts = vim.deepcopy(options.ghostty or {})
 
-  local attempted, ok, err = renderers.try_render(
-    resolved,
-    term,
-    config.options and config.options.experimental
-  )
-  if attempted and ok then
-    return
+  mode_opts = mode_opts or {}
+  if mode_opts.large then
+    kitty_opts.launch_type = "os-window"
+
+    local placement = options.preview_placement or {}
+    wezterm_opts.split_direction = placement.direction or wezterm_opts.split_direction
+    wezterm_opts.split_percent = wezterm_opts.split_percent or 90
+
+    if ghostty_opts.mode == "tmux" then
+      ghostty_opts.tmux_split_direction = placement.direction or ghostty_opts.tmux_split_direction
+      ghostty_opts.tmux_split_percent = ghostty_opts.tmux_split_percent or 90
+    end
   end
-  if attempted and not ok then
-    local exp = config.options and config.options.experimental or nil
-    local reason = (err or ""):lower()
-    local tty_failure = reason:find("/dev/tty", 1, true)
-      or reason:find("controlling terminal", 1, true)
-      or reason:find("not a tty", 1, true)
 
-    if exp and exp.internal_render and tty_failure then
-      exp.internal_render = false
-      exp._auto_disabled_reason = err or "controlling terminal unavailable"
-      notify.warn(
-        "viewim: internal render unavailable (no controlling terminal), auto-disabled for this session"
-      )
-    else
-      notify.warn(
-        "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or "")
-      )
+  return kitty_opts, wezterm_opts, ghostty_opts
+end
+
+local function dispatch_preview(resolved, mode_opts)
+  local term = detect.get_terminal()
+  local kitty_opts, wezterm_opts, ghostty_opts = merged_options(mode_opts)
+
+  if not mode_opts or not mode_opts.large then
+    local attempted, ok, err = renderers.try_render(
+      resolved,
+      term,
+      config.options and config.options.experimental
+    )
+    if attempted and ok then
+      return
+    end
+    if attempted and not ok then
+      local exp = config.options and config.options.experimental or nil
+      local reason = (err or ""):lower()
+      local tty_failure = reason:find("/dev/tty", 1, true)
+        or reason:find("controlling terminal", 1, true)
+        or reason:find("not a tty", 1, true)
+
+      if exp and exp.internal_render and tty_failure then
+        exp.internal_render = false
+        exp._auto_disabled_reason = err or "controlling terminal unavailable"
+        notify.warn(
+          "viewim: internal render unavailable (no controlling terminal), auto-disabled for this session"
+        )
+      else
+        notify.warn(
+          "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or "")
+        )
+      end
     end
   end
 
   if term == "kitty" then
-    run_or_notify(kitty_runner.run(resolved, config.options and config.options.kitty))
+    run_or_notify(kitty_runner.run(resolved, kitty_opts))
   elseif term == "wezterm" then
-    run_or_notify(wezterm_runner.run(resolved, config.options and config.options.wezterm))
+    run_or_notify(wezterm_runner.run(resolved, wezterm_opts))
   elseif term == "ghostty" then
-    run_or_notify(ghostty_runner.run(resolved, config.options and config.options.ghostty))
+    run_or_notify(ghostty_runner.run(resolved, ghostty_opts))
   else
     notify.error(
       "viewim: unsupported terminal. Requires kitty, wezterm, or ghostty."
@@ -88,9 +114,7 @@ local function dispatch_preview(resolved)
   end
 end
 
---- Preview an image file in the terminal.
---- @param raw_path string
-function M.preview(raw_path)
+local function preview_with_mode(raw_path, mode_opts)
   if not config.options or vim.tbl_isempty(config.options) then
     config.setup({})
   end
@@ -131,7 +155,7 @@ function M.preview(raw_path)
           return
         end
 
-        dispatch_preview(resolved)
+        dispatch_preview(resolved, mode_opts)
       end)
     end)
     return
@@ -149,7 +173,19 @@ function M.preview(raw_path)
     return
   end
 
-  dispatch_preview(resolved)
+  dispatch_preview(resolved, mode_opts)
+end
+
+--- Preview an image file in the terminal.
+--- @param raw_path string
+function M.preview(raw_path)
+  preview_with_mode(raw_path, nil)
+end
+
+--- Preview using a larger launcher mode (used by search alt action).
+--- @param raw_path string
+function M.preview_large(raw_path)
+  preview_with_mode(raw_path, { large = true })
 end
 
 -- Backward-compatible internal entry points.

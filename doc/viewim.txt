@@ -162,6 +162,9 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       preferred_picker = "auto",
       max_results = 500,
       include_hidden = false,
+      selection_preview = true,
+      selection_preview_debounce_ms = 120,
+      space_action = "large_preview",
     },
     experimental = {
       internal_render = false,
@@ -357,6 +360,22 @@ Options: ~
     Default: `false`
     Includes hidden image files in search when true.
 
+  `search.selection_preview`               *viewim-config-search-selection-preview*
+    Type: boolean
+    Default: `true`
+    Enables preview while moving selection in picker backends that support it.
+
+  `search.selection_preview_debounce_ms` *viewim-config-search-selection-debounce*
+    Type: number
+    Default: `120`
+    Debounce delay for selection-change preview.
+
+  `search.space_action`                    *viewim-config-search-space-action*
+    Type: string
+    Default: `"large_preview"`
+    Action used when `<Space>` is pressed in supported pickers.
+    Supported values: `large_preview`, `preview`.
+
   `experimental.internal_render`               *viewim-config-experimental-internal*
     Type: boolean
     Default: `false`
@@ -406,6 +425,8 @@ Options: ~
                                                            *:SearchImage*
 :SearchImage [query]    Search project images and preview selected result.
                         Optional `[query]` pre-filters results.
+                        Selection preview and `<Space>` action depend on picker backend.
+                        Reports active picker backend after opening.
 
 ==============================================================================
 6. KEYMAPS                                                  *viewim-keymaps*
