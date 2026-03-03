@@ -13,6 +13,11 @@ local VALID_WEZTERM_SPLIT_DIRECTIONS = {
   bottom = true,
 }
 
+local VALID_GHOSTTY_MODES = {
+  external = true,
+  tmux = true,
+}
+
 M.defaults = {
   enabled = true,
   keymap = "<leader>p",
@@ -62,6 +67,9 @@ M.defaults = {
   ghostty = {
     mode = "external",
     opener = "auto",
+    tmux_split_direction = "right",
+    tmux_split_percent = nil,
+    tmux_command = "kitten icat --hold",
   },
   remote = {
     enabled = true,
@@ -156,10 +164,29 @@ end
 
 local function normalize_ghostty(opts)
   opts = opts or {}
-  if opts.mode ~= "external" then
+  if not VALID_GHOSTTY_MODES[opts.mode] then
     vim.notify("viewim: unsupported ghostty.mode, using 'external'", vim.log.levels.WARN)
     opts.mode = "external"
   end
+
+  if not VALID_WEZTERM_SPLIT_DIRECTIONS[opts.tmux_split_direction] then
+    opts.tmux_split_direction = "right"
+  end
+
+  if opts.tmux_split_percent ~= nil then
+    local n = tonumber(opts.tmux_split_percent)
+    if not n or n < 1 or n > 99 then
+      vim.notify("viewim: invalid ghostty.tmux_split_percent, ignoring", vim.log.levels.WARN)
+      opts.tmux_split_percent = nil
+    else
+      opts.tmux_split_percent = math.floor(n)
+    end
+  end
+
+  if type(opts.tmux_command) ~= "string" or opts.tmux_command == "" then
+    opts.tmux_command = "kitten icat --hold"
+  end
+
   return opts
 end
 

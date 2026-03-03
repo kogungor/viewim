@@ -5,7 +5,7 @@ Preview images directly from Neovim file explorers in your terminal.
 Works with **kitty**, **wezterm**, and **Ghostty**.
 
 - kitty / wezterm: opens image previews in a separate terminal window/pane
-- Ghostty: opens image previews in your OS native image viewer
+- Ghostty: opens image previews in your OS native image viewer, or tmux pane mode
 
 ## ✨ Features
 
@@ -20,6 +20,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Optional debounced auto-preview while moving cursor in explorer buffers
 - WezTerm split placement presets (direction and size percent)
 - Experimental internal rendering mode for kitty with fallback to launcher mode
+- Ghostty tmux pane mode (`ghostty.mode = "tmux"`)
 - `:checkhealth viewim` to verify your setup
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`
 - Safer execution path: argv-based process launching and control-character path rejection
@@ -36,6 +37,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
   - [oil.nvim](https://github.com/stevearc/oil.nvim)
   - [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim)
 - [curl](https://curl.se/) (required only for remote URL previews)
+- [tmux](https://github.com/tmux/tmux) (required only for `ghostty.mode = "tmux"`)
 
 ### 🐱 Kitty Setup (Required for kitty users)
 
@@ -136,6 +138,9 @@ require("viewim").setup({
   ghostty = {
     mode = "external",
     opener = "auto",
+    tmux_split_direction = "right",
+    tmux_split_percent = nil,
+    tmux_command = "kitten icat --hold",
   },
   remote = {
     enabled = true,
@@ -168,8 +173,11 @@ require("viewim").setup({
 | `kitty.launch_type` | `string` | `"os-window"` | Kitty launch target (`os-window`, `tab`, `window`) |
 | `wezterm.split_direction` | `string` | `"right"` | WezTerm split direction (`left`, `right`, `top`, `bottom`) |
 | `wezterm.split_percent` | `number\|nil` | `nil` | Optional pane size percentage (`1..99`) |
-| `ghostty.mode` | `string` | `"external"` | Ghostty preview mode (currently `external`) |
+| `ghostty.mode` | `string` | `"external"` | Ghostty preview mode (`external` or `tmux`) |
 | `ghostty.opener` | `string` | `"auto"` | External opener command (`auto`, `open`, `xdg-open`, or custom) |
+| `ghostty.tmux_split_direction` | `string` | `"right"` | Split direction for `ghostty.mode = "tmux"` (`left`, `right`, `top`, `bottom`) |
+| `ghostty.tmux_split_percent` | `number\|nil` | `nil` | Optional tmux pane size percentage (`1..99`) |
+| `ghostty.tmux_command` | `string` | `"kitten icat --hold"` | Command run inside tmux split pane in ghostty tmux mode |
 | `remote.enabled` | `bool` | `true` | Enable remote URL previews (`http://` / `https://`) |
 | `remote.timeout_ms` | `number` | `10000` | Download timeout in milliseconds for remote previews |
 | `remote.max_bytes` | `number` | `10485760` | Maximum remote download size in bytes |
@@ -184,6 +192,22 @@ Notes:
 - Invalid `wezterm.split_direction` falls back to `"right"`.
 - Invalid `wezterm.split_percent` is ignored.
 - Unsupported `ghostty.mode` falls back to `"external"` with a warning.
+
+Ghostty tmux mode example:
+
+```lua
+require("viewim").setup({
+  ghostty = {
+    mode = "tmux",
+    tmux_split_direction = "right",
+    tmux_split_percent = 35,
+    tmux_command = "kitten icat --hold",
+  },
+})
+```
+
+- `ghostty.mode = "tmux"` requires Neovim running inside a tmux session.
+- `tmux_command` is executed by `tmux split-window` shell context.
 - `.avif` is recognized by viewim, but actual rendering depends on terminal/image codec support.
 
 Integration resolver hooks:
@@ -293,7 +317,7 @@ Run `:checkhealth viewim` to verify:
 - CLI tools (`kitten` / `wezterm`) available in `$PATH`
 - `curl` available in `$PATH` (for remote URL preview)
 - Kitty remote socket available (for kitty)
-- Native opener available (for ghostty)
+- Ghostty dependencies by mode (`opener` for external mode, `tmux` + session for tmux mode)
 - Optional integrations loadable
 - `.avif` enabled status and compatibility warning
 - experimental internal-render capability state
@@ -311,6 +335,7 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
   - macOS: `open <file>`
   - Linux: `xdg-open <file>`
   - Windows: `explorer.exe <file>`
+  - optional tmux mode: `tmux split-window` + `ghostty.tmux_command` in new pane
 - **remote URL** — downloads `http/https` images via `curl` into `remote.cache_dir`
   using timeout and max-size limits before dispatching to terminal runners.
 

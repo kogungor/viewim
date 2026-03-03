@@ -34,7 +34,7 @@ fallback to launcher mode if internal rendering is unavailable.
 Supported terminals:
 - kitty (via kitten icat)
 - wezterm (via wezterm imgcat)
-- Ghostty (via OS native external opener)
+- Ghostty (via OS native external opener or tmux pane mode)
 
 Supported image formats: bmp, jpg, jpeg, png, gif, webp, avif.
 Note: AVIF recognition is built in, but actual rendering depends on terminal
@@ -53,6 +53,7 @@ and image codec support on your system.
   - oil.nvim
   - neo-tree.nvim
 - curl (optional; required only for remote URL previews)
+- tmux (optional; required only for `ghostty.mode = "tmux"`)
 
 ==============================================================================
 3. INSTALLATION                                          *viewim-installation*
@@ -136,6 +137,9 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
     ghostty = {
       mode = "external",
       opener = "auto",
+      tmux_split_direction = "right",
+      tmux_split_percent = nil,
+      tmux_command = "kitten icat --hold",
     },
     remote = {
       enabled = true,
@@ -241,7 +245,7 @@ Options: ~
   `ghostty.mode`                                  *viewim-config-ghostty-mode*
     Type: string
     Default: `"external"`
-    Ghostty preview mode. Currently only `external` is supported.
+    Ghostty preview mode. Supported values: `external`, `tmux`.
     Unsupported values fall back to `"external"` with a warning.
 
   `ghostty.opener`                              *viewim-config-ghostty-opener*
@@ -249,6 +253,22 @@ Options: ~
     Default: `"auto"`
     External opener command for Ghostty. `auto` uses native opener:
     macOS `open`, Linux `xdg-open`, Windows `explorer.exe`.
+
+  `ghostty.tmux_split_direction`            *viewim-config-ghostty-tmux-direction*
+    Type: string
+    Default: `"right"`
+    Split direction for `ghostty.mode = "tmux"`.
+    Supported: `left`, `right`, `top`, `bottom`.
+
+  `ghostty.tmux_split_percent`                *viewim-config-ghostty-tmux-percent*
+    Type: number|nil
+    Default: `nil`
+    Optional tmux pane size percentage (`1..99`) in tmux mode.
+
+  `ghostty.tmux_command`                      *viewim-config-ghostty-tmux-command*
+    Type: string
+    Default: `"kitten icat --hold"`
+    Command executed in the new tmux split pane when tmux mode is enabled.
 
   `remote.enabled`                              *viewim-config-remote-enabled*
     Type: boolean
@@ -385,7 +405,7 @@ Checks performed:
 - CLI tools available (`kitten` for kitty, `wezterm` for wezterm)
 - `curl` available in `$PATH` (for remote URL previews)
 - Kitty remote socket available (for kitty)
-- Native opener available (for ghostty)
+- Ghostty dependencies by mode (`opener` for external mode, `tmux` for tmux mode)
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)
 - `.avif` enabled status and compatibility warning
 - experimental internal-render capability state
@@ -414,11 +434,13 @@ AVIF fails with decoder/format error: ~
 
 No preview appears in Ghostty: ~
   1. Run `:checkhealth viewim`.
-  2. Ensure native opener exists on your platform:
-       macOS: `open`
-       Linux: `xdg-open`
-       Windows: `explorer.exe`
-  3. Or set `ghostty.opener` explicitly in setup.
+  2. If using `ghostty.mode = "external"`, ensure native opener exists:
+        macOS: `open`
+        Linux: `xdg-open`
+        Windows: `explorer.exe`
+  3. If using `ghostty.mode = "tmux"`, run Neovim inside tmux and ensure
+     `tmux` command is in `$PATH`.
+  4. You can set `ghostty.tmux_command` explicitly in setup.
 
 Relative path not found: ~
   Use an absolute path in `:ViewImage /full/path/to/file.png`.

@@ -64,21 +64,44 @@ function M.check()
   elseif term == "ghostty" then
     local cfg = config.options
     local ghostty = cfg.ghostty or {}
-    local opener = ghostty.opener or "auto"
+    local mode = ghostty.mode or "external"
 
-    if opener == "auto" then
-      local native = detect.get_native_opener()
-      if native and detect.has_command(native) then
-        vim.health.ok("native opener found: " .. native)
-      elseif native then
-        vim.health.error("native opener not found: " .. native)
+    if mode == "tmux" then
+      if detect.has_command("tmux") then
+        vim.health.ok("'tmux' command found in $PATH")
       else
-        vim.health.error("could not determine native opener for this platform")
+        vim.health.error("'tmux' command not found in $PATH")
       end
-    elseif detect.has_command(opener) then
-      vim.health.ok("ghostty opener found: " .. opener)
+
+      if os.getenv("TMUX") then
+        vim.health.ok("inside tmux session")
+      else
+        vim.health.warn("ghostty tmux mode requires running nvim inside tmux")
+      end
+
+      local tmux_command = ghostty.tmux_command or ""
+      if tmux_command ~= "" then
+        vim.health.ok("ghostty tmux command configured: " .. tmux_command)
+      else
+        vim.health.error("ghostty tmux command is empty")
+      end
     else
-      vim.health.error("ghostty opener not found: " .. opener)
+      local opener = ghostty.opener or "auto"
+
+      if opener == "auto" then
+        local native = detect.get_native_opener()
+        if native and detect.has_command(native) then
+          vim.health.ok("native opener found: " .. native)
+        elseif native then
+          vim.health.error("native opener not found: " .. native)
+        else
+          vim.health.error("could not determine native opener for this platform")
+        end
+      elseif detect.has_command(opener) then
+        vim.health.ok("ghostty opener found: " .. opener)
+      else
+        vim.health.error("ghostty opener not found: " .. opener)
+      end
     end
   end
 
