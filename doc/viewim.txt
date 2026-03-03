@@ -26,6 +26,9 @@ file explorers (nvim-tree, oil.nvim, neo-tree) or from the current buffer.
 Images are opened in a separate terminal window or pane using your terminal's
 native image display capabilities.
 
+It also supports remote URL previews (`http://` / `https://`) and runtime
+enable/disable controls.
+
 Supported terminals:
 - kitty (via kitten icat)
 - wezterm (via wezterm imgcat)
@@ -274,14 +277,17 @@ Optional mouse preview keymap can be enabled with:
 nvim-tree ~
   Uses `nvim-tree.api` to get the node under cursor. The deprecated
   `nvim-tree.lib` module is NOT used.
+  Supports optional `integrations.nvim_tree.resolve_path` hook.
 
 oil.nvim ~
   Uses `oil.get_cursor_entry()` and `oil.get_current_dir()` to resolve
   the full path of the file under cursor.
+  Supports optional `integrations.oil.resolve_path` hook.
 
 neo-tree ~
   Uses `neo-tree.sources.manager` to access the filesystem state and
   get the selected node's path.
+  Supports optional `integrations.neo_tree.resolve_path` hook.
 
 buffer ~
   Falls back to `vim.api.nvim_buf_get_name(0)` to get the current
@@ -292,22 +298,29 @@ buffer ~
 
 viewim is organized by responsibility:
 
-- `plugin/viewim.lua`: registers `:ViewImage`
-- `lua/viewim/init.lua`: public API and keymap wiring
+- `plugin/viewim.lua`: registers user commands (`:ViewImage`,
+  `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`,
+  `:ViewImageStatus`)
+- `lua/viewim/init.lua`: public API, runtime controls, and keymap wiring
 - `lua/viewim/config.lua`: defaults + normalized/validated config
 - `lua/viewim/path.lua`: path resolution and control-character checks
-- `lua/viewim/preview.lua`: orchestrator (`validate -> detect -> dispatch`)
+- `lua/viewim/url.lua`: URL helpers (`scheme`, extension hints)
+- `lua/viewim/download.lua`: remote downloader with timeout/size limits
+- `lua/viewim/preview.lua`: orchestrator
+  (`enabled -> local/remote handling -> validate -> detect -> dispatch`)
 - `lua/viewim/detect.lua`: terminal/platform detection helpers
 - `lua/viewim/runners/*.lua`: terminal-specific launch logic
-- `lua/viewim/integrations/*.lua`: explorer/buffer path adapters
+- `lua/viewim/integrations/*.lua`: explorer/buffer path adapters + resolver hook
 - `lua/viewim/health.lua`: `:checkhealth viewim`
 
 Runtime flow: ~
   1. User triggers `:ViewImage` or integration keymap.
   2. Integration resolves a candidate file path.
-  3. `preview.lua` validates and normalizes the path.
-  4. Terminal is detected (kitty/wezterm/ghostty).
-  5. Matching runner executes the preview command.
+  3. Optional integration `resolve_path` hook can rewrite that path.
+  4. `preview.lua` checks global enabled state.
+  5. Local path is validated, or remote URL is downloaded then validated.
+  6. Terminal is detected (kitty/wezterm/ghostty).
+  7. Matching runner executes the preview command.
 
 ==============================================================================
 9. HEALTH CHECK                                              *viewim-health*
@@ -360,6 +373,9 @@ Relative path not found: ~
 `rejected path with control characters`: ~
   The provided path includes control bytes (for example newline or NUL).
   viewim blocks these paths before launching external commands.
+
+`plugin is disabled`: ~
+  Run `:ViewImageEnable` or `:ViewImageToggle` to re-enable previews.
 
 ============================================================================== 
  vim:tw=78:ts=8:ft=help:norl:

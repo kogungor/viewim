@@ -12,9 +12,11 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Preview images from **nvim-tree**, **oil.nvim**, and **neo-tree**
 - Preview image files open in the **current buffer**
 - Terminal auto-detection (kitty / wezterm / ghostty)
-- Configurable keymap
+- Configurable keyboard and optional mouse preview keymaps
 - `:ViewImage` command with optional path argument
 - Remote image preview via `:ViewImage https://...`
+- Runtime controls: `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`, `:ViewImageStatus`
+- Per-integration path resolver hooks (`resolve_path`) with safe fallback
 - `:checkhealth viewim` to verify your setup
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`
 - Safer execution path: argv-based process launching and control-character path rejection
@@ -257,28 +259,34 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
   - macOS: `open <file>`
   - Linux: `xdg-open <file>`
   - Windows: `explorer.exe <file>`
+- **remote URL** — downloads `http/https` images via `curl` into `remote.cache_dir`
+  using timeout and max-size limits before dispatching to terminal runners.
 
 ## 🧩 Architecture
 
 `viewim` is split into small modules by responsibility:
 
-- `plugin/viewim.lua` — registers `:ViewImage`
-- `lua/viewim/init.lua` — public API (`setup`, `view`) and integration keymaps
+- `plugin/viewim.lua` — registers user commands (`:ViewImage`, `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`, `:ViewImageStatus`)
+- `lua/viewim/init.lua` — public API (`setup`, `view`, runtime controls) and integration keymaps
 - `lua/viewim/config.lua` — defaults, merge, and config normalization/validation
 - `lua/viewim/path.lua` — path resolution and control-character checks
-- `lua/viewim/preview.lua` — orchestration (`validate -> detect terminal -> dispatch`)
+- `lua/viewim/url.lua` — URL parsing helpers (`scheme`, extension hints)
+- `lua/viewim/download.lua` — remote downloader with `curl` and guardrails
+- `lua/viewim/preview.lua` — orchestration (`enabled check -> local/remote resolve -> validate -> dispatch`)
 - `lua/viewim/detect.lua` — terminal/platform/command detection helpers
 - `lua/viewim/runners/{kitty,wezterm,ghostty}.lua` — terminal-specific command runners
-- `lua/viewim/integrations/{nvim_tree,oil,neo_tree,buffer}.lua` — file explorer adapters
+- `lua/viewim/integrations/{nvim_tree,oil,neo_tree,buffer,resolve}.lua` — explorer adapters and resolver hook application
 - `lua/viewim/health.lua` — `:checkhealth viewim` diagnostics
 
 Runtime flow:
 
 1. User runs `:ViewImage` or presses the integration keymap.
 2. Integration resolves a candidate file path.
-3. `preview.lua` validates/sanitizes the path.
-4. Terminal is detected.
-5. Matching runner executes the preview command.
+3. Optional integration `resolve_path` hook rewrites the path.
+4. `preview.lua` checks global enabled state.
+5. Local path is validated, or remote URL is downloaded then validated.
+6. Terminal is detected.
+7. Matching runner executes the preview command.
 
 ## 📜 License
 
