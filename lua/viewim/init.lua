@@ -353,6 +353,17 @@ function M.search_images(query)
   if not ok then
     notify.error("viewim: failed to open image picker" .. (err and (": " .. err) or ""))
   end
+  vim.ui.select(items, {
+    prompt = "SearchImage> ",
+    format_item = function(item)
+      return item.label
+    end,
+  }, function(choice)
+    if not choice then
+      return
+    end
+    preview.preview(choice.path)
+  end)
 end
 
 return M
