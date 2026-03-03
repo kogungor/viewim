@@ -16,7 +16,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - `:ViewImage` command with optional path argument
 - Remote image preview via `:ViewImage https://...`
 - `:checkhealth viewim` to verify your setup
-- Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`
+- Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`
 - Safer execution path: argv-based process launching and control-character path rejection
 
 ## 🔐 Requirements
@@ -103,7 +103,7 @@ require("viewim").setup()
 require("viewim").setup({
   keymap = "<leader>p",
   supported_extensions = {
-    ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
   },
   integrations = {
     nvim_tree = true,

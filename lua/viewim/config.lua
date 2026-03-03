@@ -15,6 +15,7 @@ M.defaults = {
     ".png",
     ".gif",
     ".webp",
+    ".avif",
   },
   integrations = {
     nvim_tree = true,

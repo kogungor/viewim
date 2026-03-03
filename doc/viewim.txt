@@ -31,7 +31,7 @@ Supported terminals:
 - wezterm (via wezterm imgcat)
 - Ghostty (via OS native external opener)
 
-Supported image formats: bmp, jpg, jpeg, png, gif, webp.
+Supported image formats: bmp, jpg, jpeg, png, gif, webp, avif.
 
 ==============================================================================
 2. REQUIREMENTS                                          *viewim-requirements*
@@ -101,7 +101,7 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
   require("viewim").setup({
     keymap = "<leader>p",
     supported_extensions = {
-      ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp",
+      ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
     },
     integrations = {
       nvim_tree = true,
@@ -135,7 +135,7 @@ Options: ~
 
   `supported_extensions`                          *viewim-config-extensions*
     Type: table (list of strings)
-    Default: `{ ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp" }`
+    Default: `{ ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif" }`
     List of file extensions recognized as images.
     Entries are normalized to lowercase; both `"png"` and `".png"` work.
     Invalid entries are ignored with a warning.
@@ -284,7 +284,7 @@ No preview appears in kitty: ~
   Set `kitty.listen_on` explicitly in `require("viewim").setup({...})`.
 
 `not a supported image`: ~
-  Pass a full filename with extension (for example `.png`, `.jpg`, `.webp`).
+  Pass a full filename with extension (for example `.png`, `.jpg`, `.webp`, `.avif`).
 
 No preview appears in Ghostty: ~
   1. Run `:checkhealth viewim`.
