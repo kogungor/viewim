@@ -18,6 +18,13 @@ local VALID_GHOSTTY_MODES = {
   tmux = true,
 }
 
+local VALID_SEARCH_PICKERS = {
+  auto = true,
+  telescope = true,
+  snacks = true,
+  builtin = true,
+}
+
 M.defaults = {
   enabled = true,
   quiet_warnings = false,
@@ -86,6 +93,12 @@ M.defaults = {
     max_bytes = 10485760,
     cache_dir = vim.fs.normalize(vim.fn.stdpath("cache") .. "/viewim/remote"),
     require_https = false,
+  },
+  search = {
+    enabled = true,
+    preferred_picker = "auto",
+    max_results = 500,
+    include_hidden = false,
   },
 }
 
@@ -256,6 +269,32 @@ local function normalize_remote(opts)
   return opts
 end
 
+local function normalize_search(opts)
+  opts = opts or {}
+
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = true
+  end
+
+  if not VALID_SEARCH_PICKERS[opts.preferred_picker] then
+    warn("viewim: invalid search.preferred_picker, using 'auto'")
+    opts.preferred_picker = "auto"
+  end
+
+  if type(opts.max_results) ~= "number" or opts.max_results < 10 then
+    warn("viewim: invalid search.max_results, using 500")
+    opts.max_results = 500
+  else
+    opts.max_results = math.floor(opts.max_results)
+  end
+
+  if type(opts.include_hidden) ~= "boolean" then
+    opts.include_hidden = false
+  end
+
+  return opts
+end
+
 local function normalize_enabled(value)
   if type(value) == "boolean" then
     return value
@@ -361,6 +400,7 @@ function M.setup(opts)
   M.options.wezterm = normalize_wezterm(M.options.wezterm)
   M.options.ghostty = normalize_ghostty(M.options.ghostty)
   M.options.remote = normalize_remote(M.options.remote)
+  M.options.search = normalize_search(M.options.search)
 
   M._ext_lookup = {}
   for _, ext in ipairs(M.options.supported_extensions) do

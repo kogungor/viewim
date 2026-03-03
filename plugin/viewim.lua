@@ -46,3 +46,11 @@ end, {
   nargs = 0,
   desc = "Show viewim status",
 })
+
+vim.api.nvim_create_user_command("SearchImage", function(cmd_opts)
+  local query = cmd_opts.args ~= "" and cmd_opts.args or nil
+  require("viewim").search_images(query)
+end, {
+  nargs = "*",
+  desc = "Search project images and preview selected",
+})
