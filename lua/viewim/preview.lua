@@ -61,6 +61,10 @@ end
 --- Preview an image file in the terminal.
 --- @param raw_path string
 function M.preview(raw_path)
+  if not config.options or vim.tbl_isempty(config.options) then
+    config.setup({})
+  end
+
   local is_remote = url.is_http_url(raw_path)
   if is_remote then
     local remote = config.options and config.options.remote or {}
