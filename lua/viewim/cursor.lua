@@ -20,8 +20,24 @@ local function normalize_markdown_target(raw)
     value = value:sub(2, -2)
   end
 
+  if (value:sub(1, 1) == '"' and value:sub(-1) == '"')
+    or (value:sub(1, 1) == "'" and value:sub(-1) == "'") then
+    value = value:sub(2, -2)
+  end
+
   local first = value:match("^([^%s]+)")
-  return first or value
+  local target = first or value
+
+  if target:sub(1, 1) == "<" and target:sub(-1) == ">" then
+    target = target:sub(2, -2)
+  end
+
+  if (target:sub(1, 1) == '"' and target:sub(-1) == '"')
+    or (target:sub(1, 1) == "'" and target:sub(-1) == "'") then
+    target = target:sub(2, -2)
+  end
+
+  return target
 end
 
 local function maybe_map_root_relative(path_value)
@@ -70,16 +86,16 @@ end
 local function html_img_src_under_cursor(line, col)
   local search_from = 1
   while true do
-    local s, e = line:find("<img%s+.-/?>", search_from)
+    local s, e = line:find("<[Ii][Mm][Gg]%s+.-/?>", search_from)
     if not s then
       return nil
     end
 
     if col_in_range(col, s, e) then
       local tag = line:sub(s, e)
-      local src = tag:match('src%s*=%s*"([^"]+)"')
-        or tag:match("src%s*=%s*'([^']+)'")
-        or tag:match("src%s*=%s*([^%s>]+)")
+      local src = tag:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
+        or tag:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
+        or tag:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
       return src and vim.trim(src) or nil
     end
 
