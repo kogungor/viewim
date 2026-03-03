@@ -1,4 +1,5 @@
 local config = require("viewim.config")
+local cursor = require("viewim.cursor")
 local detect = require("viewim.detect")
 local preview = require("viewim.preview")
 local uv = vim.uv or vim.loop
@@ -222,6 +223,12 @@ function M.view(path)
     -- Fall back to current buffer
     require("viewim.integrations.buffer").preview()
   end
+end
+
+--- Preview markdown/html image source under the current cursor.
+--- Supports markdown image syntax and HTML img tags.
+function M.view_at_cursor()
+  cursor.preview_at_cursor()
 end
 
 return M

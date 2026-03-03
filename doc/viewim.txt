@@ -320,6 +320,12 @@ Options: ~
                         - In neo-tree: preview file under cursor
                         - Otherwise: preview current buffer file
 
+                                                      *:ViewImageAtCursor*
+:ViewImageAtCursor      Preview markdown/html image source under cursor.
+                        Supported patterns:
+                        - `![alt](path-or-url)`
+                        - `<img src="path-or-url" ...>`
+
                                                         *:ViewImageEnable*
 :ViewImageEnable        Enable viewim previews.
 
@@ -376,8 +382,10 @@ buffer ~
 viewim is organized by responsibility:
 
 - `plugin/viewim.lua`: registers user commands (`:ViewImage`,
+  `:ViewImageAtCursor`,
   `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`,
   `:ViewImageStatus`)
+- `lua/viewim/cursor.lua`: extracts markdown/html image source under cursor
 - `lua/viewim/init.lua`: public API, runtime controls, and keymap wiring
 - `lua/viewim/config.lua`: defaults + normalized/validated config
 - `lua/viewim/path.lua`: path resolution and control-character checks

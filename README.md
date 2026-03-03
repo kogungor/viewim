@@ -14,6 +14,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Terminal auto-detection (kitty / wezterm / ghostty)
 - Configurable keyboard and optional mouse preview keymaps
 - `:ViewImage` command with optional path argument
+- `:ViewImageAtCursor` for markdown/html image source under cursor
 - Remote image preview via `:ViewImage https://...`
 - Runtime controls: `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`, `:ViewImageStatus`
 - Per-integration path resolver hooks (`resolve_path`) with safe fallback
@@ -309,6 +310,16 @@ You can also preview a remote image URL:
 
 Only `http://` and `https://` URLs are supported.
 
+Preview markdown/html image source under cursor:
+
+```
+:ViewImageAtCursor
+```
+
+Supported cursor patterns:
+- Markdown image: `![alt](path-or-url)`
+- HTML image: `<img src="path-or-url" ...>`
+
 If a path contains control characters (for example newline or NUL bytes), viewim rejects it before command execution.
 
 ## 🩺 Health Check
@@ -346,6 +357,7 @@ If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above
 `viewim` is split into small modules by responsibility:
 
 - `plugin/viewim.lua` — registers user commands (`:ViewImage`, `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`, `:ViewImageStatus`)
+- `lua/viewim/cursor.lua` — extracts markdown/html image source under cursor
 - `lua/viewim/init.lua` — public API (`setup`, `view`, runtime controls) and integration keymaps
 - `lua/viewim/config.lua` — defaults, merge, and config normalization/validation
 - `lua/viewim/path.lua` — path resolution and control-character checks

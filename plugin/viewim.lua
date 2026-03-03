@@ -12,6 +12,13 @@ end, {
   desc = "Preview an image file in the terminal",
 })
 
+vim.api.nvim_create_user_command("ViewImageAtCursor", function()
+  require("viewim").view_at_cursor()
+end, {
+  nargs = 0,
+  desc = "Preview markdown/html image source under cursor",
+})
+
 vim.api.nvim_create_user_command("ViewImageEnable", function()
   require("viewim").enable()
 end, {
