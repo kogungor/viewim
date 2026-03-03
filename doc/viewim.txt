@@ -32,6 +32,8 @@ Supported terminals:
 - Ghostty (via OS native external opener)
 
 Supported image formats: bmp, jpg, jpeg, png, gif, webp, avif.
+Note: AVIF recognition is built in, but actual rendering depends on terminal
+and image codec support on your system.
 
 ==============================================================================
 2. REQUIREMENTS                                          *viewim-requirements*
@@ -268,6 +270,7 @@ Checks performed:
 - Kitty remote socket available (for kitty)
 - Native opener available (for ghostty)
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)
+- `.avif` enabled status and compatibility warning
 
 ============================================================================== 
 10. TROUBLESHOOTING                             *viewim-troubleshooting*
@@ -285,6 +288,11 @@ No preview appears in kitty: ~
 
 `not a supported image`: ~
   Pass a full filename with extension (for example `.png`, `.jpg`, `.webp`, `.avif`).
+
+AVIF fails with decoder/format error: ~
+  viewim recognizes `.avif`, but rendering is done by your terminal stack.
+  If your terminal/image backend cannot decode AVIF, preview will fail.
+  Try `.webp`/`.png` or use a terminal build with AVIF support.
 
 No preview appears in Ghostty: ~
   1. Run `:checkhealth viewim`.

@@ -150,6 +150,7 @@ Notes:
 - Invalid extension entries are ignored with a warning.
 - Invalid `kitty.launch_type` falls back to `"os-window"` with a warning.
 - Unsupported `ghostty.mode` falls back to `"external"` with a warning.
+- `.avif` is recognized by viewim, but actual rendering depends on terminal/image codec support.
 
 ## 🚀 Usage
 
@@ -196,6 +197,7 @@ Run `:checkhealth viewim` to verify:
 - Kitty remote socket available (for kitty)
 - Native opener available (for ghostty)
 - Optional integrations loadable
+- `.avif` enabled status and compatibility warning
 
 If `KITTY_LISTEN_ON` is empty, set `kitty.listen_on` in `setup()` as shown above.
 
