@@ -346,7 +346,6 @@ Options: ~
     Default: `"auto"`
     Picker preference for search UI (`auto`, `telescope`, `snacks`, `builtin`).
     Falls back automatically to next available backend.
-    MVP currently uses builtin selector path.
 
   `search.max_results`                           *viewim-config-search-max-results*
     Type: number
