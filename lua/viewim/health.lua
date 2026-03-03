@@ -143,6 +143,38 @@ function M.check()
     end
   end
 
+  vim.health.start("viewim search")
+  local search = cfg.search or {}
+  if search.enabled == false then
+    vim.health.info("search is disabled")
+  else
+    vim.health.ok("search is enabled")
+    vim.health.info("search.preferred_picker = " .. tostring(search.preferred_picker or "auto"))
+
+    local has_telescope = pcall(require, "telescope")
+    local has_snacks = pcall(require, "snacks") or pcall(require, "snacks.picker")
+
+    if has_telescope then
+      vim.health.ok("telescope is available")
+    else
+      vim.health.info("telescope is not installed (optional)")
+    end
+
+    if has_snacks then
+      vim.health.ok("snacks picker is available")
+    else
+      vim.health.info("snacks picker is not installed (optional)")
+    end
+
+    local pickers = require("viewim.pickers")
+    local backend_name = pickers.resolve_backend(search.preferred_picker or "auto")
+    if backend_name then
+      vim.health.ok("active search picker backend: " .. backend_name)
+    else
+      vim.health.error("no search picker backend available")
+    end
+  end
+
   vim.health.start("viewim format support")
   local extensions = cfg.supported_extensions or {}
   local has_avif = false
