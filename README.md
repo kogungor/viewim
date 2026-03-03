@@ -122,6 +122,10 @@ require("viewim").setup({
     debounce_ms = 180,
     only_images = true,
   },
+  markdown_auto_preview = {
+    enabled = false,
+    debounce_ms = 220,
+  },
   supported_extensions = {
     ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
   },
@@ -169,6 +173,8 @@ require("viewim").setup({
 | `explorer_auto_preview.enabled` | `bool` | `false` | Auto-preview on cursor movement in explorer buffers |
 | `explorer_auto_preview.debounce_ms` | `number` | `180` | Debounce delay for auto-preview triggers |
 | `explorer_auto_preview.only_images` | `bool` | `true` | Skip non-image entries when auto-previewing |
+| `markdown_auto_preview.enabled` | `bool` | `false` | Auto-preview image sources while moving cursor in markdown/html buffers |
+| `markdown_auto_preview.debounce_ms` | `number` | `220` | Debounce delay for markdown/html cursor auto-preview |
 | `supported_extensions` | `table` | see above | List of image file extensions to recognize |
 | `integrations.nvim_tree.enabled` | `bool` | `true` | Enable nvim-tree keymap |
 | `integrations.oil.enabled` | `bool` | `true` | Enable oil.nvim keymap |
@@ -262,6 +268,17 @@ require("viewim").setup({
     enabled = true,
     debounce_ms = 200,
     only_images = true,
+  },
+})
+```
+
+Optional markdown/html cursor auto-preview (off by default):
+
+```lua
+require("viewim").setup({
+  markdown_auto_preview = {
+    enabled = true,
+    debounce_ms = 220,
   },
 })
 ```

@@ -6,6 +6,7 @@ local uv = vim.uv or vim.loop
 
 local M = {}
 local auto_preview_state = {}
+local markdown_auto_preview_state = {}
 
 local function ensure_config_initialized()
   if not config.options or vim.tbl_isempty(config.options) then
@@ -30,6 +31,80 @@ local function map_cursor_preview_key(bufnr, key)
   vim.keymap.set("n", key, function()
     require("viewim").view_at_cursor()
   end, { buffer = bufnr, silent = true, desc = "viewim: preview image at cursor" })
+end
+
+local function setup_markdown_auto_preview(bufnr)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
+  local opts = config.options.markdown_auto_preview or {}
+  if not opts.enabled then
+    return
+  end
+
+  if vim.b[bufnr].viewim_markdown_auto_preview_attached then
+    return
+  end
+  vim.b[bufnr].viewim_markdown_auto_preview_attached = true
+
+  local state = markdown_auto_preview_state[bufnr]
+  if not state then
+    state = {
+      timer = uv.new_timer(),
+      pending_source = nil,
+      last_source = nil,
+    }
+    markdown_auto_preview_state[bufnr] = state
+  end
+
+  local group = vim.api.nvim_create_augroup("viewim_markdown_auto_preview", { clear = false })
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    group = group,
+    buffer = bufnr,
+    callback = function()
+      local src = cursor.get_image_source_under_cursor()
+      if not src or src == "" then
+        return
+      end
+
+      state.pending_source = src
+      state.timer:stop()
+      state.timer:start(opts.debounce_ms, 0, function()
+        local source = state.pending_source
+        if not source or source == state.last_source then
+          return
+        end
+
+        state.last_source = source
+        vim.schedule(function()
+          if not vim.api.nvim_buf_is_valid(bufnr) then
+            return
+          end
+          if vim.api.nvim_get_current_buf() ~= bufnr then
+            return
+          end
+
+          preview.preview(source)
+        end)
+      end)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "BufWipeout", "BufDelete" }, {
+    group = group,
+    buffer = bufnr,
+    callback = function()
+      local current = markdown_auto_preview_state[bufnr]
+      if not current then
+        return
+      end
+
+      current.timer:stop()
+      current.timer:close()
+      markdown_auto_preview_state[bufnr] = nil
+    end,
+  })
 end
 
 local function setup_auto_preview(bufnr, module_name)
@@ -168,6 +243,7 @@ function M.setup(opts)
     pattern = { "markdown", "mdx", "rmd", "quarto", "html" },
     callback = function(args)
       map_cursor_preview_key(args.buf, cursor_key)
+      setup_markdown_auto_preview(args.buf)
     end,
   })
 end

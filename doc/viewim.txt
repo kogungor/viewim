@@ -120,6 +120,10 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       debounce_ms = 180,
       only_images = true,
     },
+    markdown_auto_preview = {
+      enabled = false,
+      debounce_ms = 220,
+    },
     supported_extensions = {
       ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
     },
@@ -202,6 +206,16 @@ Options: ~
     Type: boolean
     Default: `true`
     When true, skips non-image entries during auto-preview.
+
+  `markdown_auto_preview.enabled`     *viewim-config-markdown-auto-preview-enabled*
+    Type: boolean
+    Default: `false`
+    Enables auto-preview while moving cursor in markdown/html buffers.
+
+  `markdown_auto_preview.debounce_ms` *viewim-config-markdown-auto-preview-debounce*
+    Type: number
+    Default: `220`
+    Debounce delay in milliseconds for markdown/html cursor auto-preview.
 
   `supported_extensions`                          *viewim-config-extensions*
     Type: table (list of strings)
@@ -370,6 +384,9 @@ Optional mouse preview keymap can be enabled with:
 Optional auto-preview can be enabled with:
   `explorer_auto_preview = { enabled = true, debounce_ms = 200,
     only_images = true }`
+
+Optional markdown/html cursor auto-preview can be enabled with:
+  `markdown_auto_preview = { enabled = true, debounce_ms = 220 }`
 
 ==============================================================================
 7. INTEGRATIONS                                          *viewim-integrations*

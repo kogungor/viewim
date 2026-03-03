@@ -32,6 +32,10 @@ M.defaults = {
     debounce_ms = 180,
     only_images = true,
   },
+  markdown_auto_preview = {
+    enabled = false,
+    debounce_ms = 220,
+  },
   experimental = {
     internal_render = false,
   },
@@ -302,6 +306,20 @@ local function normalize_explorer_auto_preview(opts)
   return opts
 end
 
+local function normalize_markdown_auto_preview(opts)
+  opts = opts or {}
+
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = false
+  end
+
+  if type(opts.debounce_ms) ~= "number" or opts.debounce_ms < 50 then
+    opts.debounce_ms = 220
+  end
+
+  return opts
+end
+
 local function normalize_experimental(opts)
   opts = opts or {}
   if type(opts.internal_render) ~= "boolean" then
@@ -320,6 +338,7 @@ function M.setup(opts)
   M.options.cursor_keymap = normalize_cursor_keymap(M.options.cursor_keymap)
   M.options.mouse_preview = normalize_mouse_preview(M.options.mouse_preview)
   M.options.explorer_auto_preview = normalize_explorer_auto_preview(M.options.explorer_auto_preview)
+  M.options.markdown_auto_preview = normalize_markdown_auto_preview(M.options.markdown_auto_preview)
   M.options.experimental = normalize_experimental(M.options.experimental)
   M.options.integrations = normalize_integrations(M.options.integrations)
   M.options.supported_extensions = normalize_extensions(M.options.supported_extensions)
