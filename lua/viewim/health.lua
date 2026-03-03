@@ -2,6 +2,10 @@ local M = {}
 
 function M.check()
   vim.health.start("viewim")
+  local config = require("viewim.config")
+  if not config.options or vim.tbl_isempty(config.options) then
+    config.setup({})
+  end
 
   -- Check Neovim version
   if vim.fn.has("nvim-0.9") == 1 then
@@ -34,7 +38,7 @@ function M.check()
       vim.health.error("'kitten' command not found in $PATH (required for icat)")
     end
 
-    local cfg = require("viewim.config").options
+    local cfg = config.options
     local listen_on = (cfg.kitty and cfg.kitty.listen_on) or os.getenv("KITTY_LISTEN_ON")
     if listen_on and listen_on ~= "" then
       local sock_path = listen_on:match("^unix:(.+)$")
@@ -57,7 +61,7 @@ function M.check()
       vim.health.error("'wezterm' command not found in $PATH")
     end
   elseif term == "ghostty" then
-    local cfg = require("viewim.config").options
+    local cfg = config.options
     local ghostty = cfg.ghostty or {}
     local opener = ghostty.opener or "auto"
 
@@ -92,6 +96,26 @@ function M.check()
       vim.health.ok(int.name .. " is available")
     else
       vim.health.info(int.name .. " is not installed (optional)")
+    end
+  end
+
+  vim.health.start("viewim remote")
+  local cfg = config.options
+  local remote = cfg.remote or {}
+
+  if remote.enabled == false then
+    vim.health.info("remote preview is disabled")
+  else
+    if detect.has_command("curl") then
+      vim.health.ok("'curl' command found in $PATH")
+    else
+      vim.health.error("'curl' command not found in $PATH (required for URL preview)")
+    end
+
+    if type(remote.cache_dir) == "string" and remote.cache_dir ~= "" then
+      vim.health.ok("remote cache dir configured: " .. remote.cache_dir)
+    else
+      vim.health.error("remote cache dir is not configured")
     end
   end
 end

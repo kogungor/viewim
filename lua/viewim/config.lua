@@ -29,6 +29,13 @@ M.defaults = {
     mode = "external",
     opener = "auto",
   },
+  remote = {
+    enabled = true,
+    timeout_ms = 10000,
+    max_bytes = 10485760,
+    cache_dir = vim.fs.normalize(vim.fn.stdpath("cache") .. "/viewim/remote"),
+    require_https = false,
+  },
 }
 
 M.options = {}
@@ -80,6 +87,34 @@ local function normalize_ghostty(opts)
   return opts
 end
 
+local function normalize_remote(opts)
+  opts = opts or {}
+
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = true
+  end
+
+  if type(opts.require_https) ~= "boolean" then
+    opts.require_https = false
+  end
+
+  if type(opts.timeout_ms) ~= "number" or opts.timeout_ms < 1000 then
+    vim.notify("viewim: invalid remote.timeout_ms, using 10000", vim.log.levels.WARN)
+    opts.timeout_ms = 10000
+  end
+
+  if type(opts.max_bytes) ~= "number" or opts.max_bytes <= 0 then
+    vim.notify("viewim: invalid remote.max_bytes, using 10485760", vim.log.levels.WARN)
+    opts.max_bytes = 10485760
+  end
+
+  if type(opts.cache_dir) ~= "string" or opts.cache_dir == "" then
+    opts.cache_dir = vim.fs.normalize(vim.fn.stdpath("cache") .. "/viewim/remote")
+  end
+
+  return opts
+end
+
 function M.setup(opts)
   opts = opts or {}
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)
@@ -87,6 +122,7 @@ function M.setup(opts)
   M.options.supported_extensions = normalize_extensions(M.options.supported_extensions)
   M.options.kitty = normalize_kitty(M.options.kitty)
   M.options.ghostty = normalize_ghostty(M.options.ghostty)
+  M.options.remote = normalize_remote(M.options.remote)
 
   M._ext_lookup = {}
   for _, ext in ipairs(M.options.supported_extensions) do

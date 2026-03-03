@@ -14,6 +14,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
 - Terminal auto-detection (kitty / wezterm / ghostty)
 - Configurable keymap
 - `:ViewImage` command with optional path argument
+- Remote image preview via `:ViewImage https://...`
 - `:checkhealth viewim` to verify your setup
 - Supported formats: `bmp`, `jpg`, `jpeg`, `png`, `gif`, `webp`
 - Safer execution path: argv-based process launching and control-character path rejection
@@ -29,6 +30,7 @@ Works with **kitty**, **wezterm**, and **Ghostty**.
   - [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua)
   - [oil.nvim](https://github.com/stevearc/oil.nvim)
   - [neo-tree.nvim](https://github.com/nvim-neo-tree/neo-tree.nvim)
+- [curl](https://curl.se/) (required only for remote URL previews)
 
 ### 🐱 Kitty Setup (Required for kitty users)
 
@@ -116,6 +118,13 @@ require("viewim").setup({
     mode = "external",
     opener = "auto",
   },
+  remote = {
+    enabled = true,
+    timeout_ms = 10000,
+    max_bytes = 10485760,
+    cache_dir = vim.fn.stdpath("cache") .. "/viewim/remote",
+    require_https = false,
+  },
 })
 ```
 
@@ -130,6 +139,11 @@ require("viewim").setup({
 | `kitty.launch_type` | `string` | `"os-window"` | Kitty launch target (`os-window`, `tab`, `window`) |
 | `ghostty.mode` | `string` | `"external"` | Ghostty preview mode (currently `external`) |
 | `ghostty.opener` | `string` | `"auto"` | External opener command (`auto`, `open`, `xdg-open`, or custom) |
+| `remote.enabled` | `bool` | `true` | Enable remote URL previews (`http://` / `https://`) |
+| `remote.timeout_ms` | `number` | `10000` | Download timeout in milliseconds for remote previews |
+| `remote.max_bytes` | `number` | `10485760` | Maximum remote download size in bytes |
+| `remote.cache_dir` | `string` | `stdpath("cache") .. "/viewim/remote"` | Cache directory for downloaded remote images |
+| `remote.require_https` | `bool` | `false` | If true, reject `http://` URLs and allow only `https://` |
 
 Notes:
 - `supported_extensions` entries are normalized to lowercase; both `"png"` and `".png"` are accepted.
@@ -162,6 +176,14 @@ You can also pass an explicit path:
 :ViewImage /path/to/image.png
 ```
 
+You can also preview a remote image URL:
+
+```
+:ViewImage https://example.com/image.png
+```
+
+Only `http://` and `https://` URLs are supported.
+
 If a path contains control characters (for example newline or NUL bytes), viewim rejects it before command execution.
 
 ## 🩺 Health Check
@@ -170,6 +192,7 @@ Run `:checkhealth viewim` to verify:
 
 - Terminal emulator detected
 - CLI tools (`kitten` / `wezterm`) available in `$PATH`
+- `curl` available in `$PATH` (for remote URL preview)
 - Kitty remote socket available (for kitty)
 - Native opener available (for ghostty)
 - Optional integrations loadable

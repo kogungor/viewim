@@ -45,6 +45,7 @@ Supported image formats: bmp, jpg, jpeg, png, gif, webp.
   - nvim-tree.lua
   - oil.nvim
   - neo-tree.nvim
+- curl (optional; required only for remote URL previews)
 
 ==============================================================================
 3. INSTALLATION                                          *viewim-installation*
@@ -115,6 +116,13 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       mode = "external",
       opener = "auto",
     },
+    remote = {
+      enabled = true,
+      timeout_ms = 10000,
+      max_bytes = 10485760,
+      cache_dir = vim.fn.stdpath("cache") .. "/viewim/remote",
+      require_https = false,
+    },
   })
 <
 
@@ -160,12 +168,38 @@ Options: ~
     External opener command for Ghostty. `auto` uses native opener:
     macOS `open`, Linux `xdg-open`, Windows `explorer.exe`.
 
+  `remote.enabled`                              *viewim-config-remote-enabled*
+    Type: boolean
+    Default: `true`
+    Enables preview from remote URLs passed to `:ViewImage`.
+
+  `remote.timeout_ms`                           *viewim-config-remote-timeout*
+    Type: number
+    Default: `10000`
+    Download timeout in milliseconds for remote URL previews.
+
+  `remote.max_bytes`                            *viewim-config-remote-maxbytes*
+    Type: number
+    Default: `10485760` (10MB)
+    Maximum accepted download size for remote URL previews.
+
+  `remote.cache_dir`                             *viewim-config-remote-cache*
+    Type: string
+    Default: `stdpath("cache") .. "/viewim/remote"`
+    Local cache directory where remote images are downloaded.
+
+  `remote.require_https`                         *viewim-config-remote-https*
+    Type: boolean
+    Default: `false`
+    If true, rejects `http://` URLs and allows only `https://`.
+
 ==============================================================================
 5. COMMANDS                                                *viewim-commands*
 
                                                                *:ViewImage*
 :ViewImage [path]       Preview an image file.
                         If [path] is given, preview that file.
+                        [path] may also be `http://` or `https://` URL.
                         If omitted, detect context:
                         - In nvim-tree: preview file under cursor
                         - In oil.nvim: preview file under cursor
@@ -230,6 +264,7 @@ Checks performed:
 - Neovim version >= 0.9
 - Terminal emulator detected (kitty / wezterm / ghostty)
 - CLI tools available (`kitten` for kitty, `wezterm` for wezterm)
+- `curl` available in `$PATH` (for remote URL previews)
 - Kitty remote socket available (for kitty)
 - Native opener available (for ghostty)
 - Optional integrations loadable (nvim-tree, oil.nvim, neo-tree)

@@ -1,6 +1,8 @@
 local config = require("viewim.config")
 local detect = require("viewim.detect")
 local path = require("viewim.path")
+local download = require("viewim.download")
+local url = require("viewim.url")
 local kitty_runner = require("viewim.runners.kitty")
 local wezterm_runner = require("viewim.runners.wezterm")
 local ghostty_runner = require("viewim.runners.ghostty")
@@ -40,15 +42,7 @@ local function run_or_notify(ok, err)
   vim.notify(err or "viewim: preview command failed", vim.log.levels.ERROR)
 end
 
---- Preview an image file in the terminal.
---- @param raw_path string
-function M.preview(raw_path)
-  local resolved, err, level = validate_path(raw_path)
-  if not resolved then
-    vim.notify(err, level or vim.log.levels.ERROR)
-    return
-  end
-
+local function dispatch_preview(resolved)
   local term = detect.get_terminal()
   if term == "kitty" then
     run_or_notify(kitty_runner.run(resolved, config.options and config.options.kitty))
@@ -62,6 +56,61 @@ function M.preview(raw_path)
       vim.log.levels.ERROR
     )
   end
+end
+
+--- Preview an image file in the terminal.
+--- @param raw_path string
+function M.preview(raw_path)
+  local is_remote = url.is_http_url(raw_path)
+  if is_remote then
+    local remote = config.options and config.options.remote or {}
+    if not remote.enabled then
+      vim.notify("viewim: remote preview is disabled (set remote.enabled=true)", vim.log.levels.WARN)
+      return
+    end
+
+    if remote.require_https and url.get_scheme(raw_path) ~= "https" then
+      vim.notify("viewim: remote preview requires https URLs", vim.log.levels.ERROR)
+      return
+    end
+
+    if vim.fn.executable("curl") ~= 1 then
+      vim.notify("viewim: 'curl' command not found in $PATH", vim.log.levels.ERROR)
+      return
+    end
+
+    download.fetch(raw_path, remote, function(local_path, _, err)
+      vim.schedule(function()
+        if err then
+          vim.notify(err, vim.log.levels.ERROR)
+          return
+        end
+
+        local resolved, v_err, level = validate_path(local_path)
+        if not resolved then
+          vim.notify(v_err, level or vim.log.levels.ERROR)
+          return
+        end
+
+        dispatch_preview(resolved)
+      end)
+    end)
+    return
+  end
+
+  local scheme = url.get_scheme(raw_path)
+  if scheme and scheme ~= "http" and scheme ~= "https" then
+    vim.notify("viewim: unsupported URL scheme: " .. scheme, vim.log.levels.ERROR)
+    return
+  end
+
+  local resolved, err, level = validate_path(raw_path)
+  if not resolved then
+    vim.notify(err, level or vim.log.levels.ERROR)
+    return
+  end
+
+  dispatch_preview(resolved)
 end
 
 -- Backward-compatible internal entry points.
