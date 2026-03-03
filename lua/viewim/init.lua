@@ -26,6 +26,10 @@ local function map_preview_keys(bufnr, key, module_name)
 end
 
 local function setup_auto_preview(bufnr, module_name)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+
   local opts = config.options.explorer_auto_preview or {}
   if not opts.enabled then
     return
@@ -120,9 +124,9 @@ function M.setup(opts)
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("viewim_nvim_tree", { clear = true }),
       pattern = "NvimTree",
-      callback = function()
-        map_preview_keys(0, key, "viewim.integrations.nvim_tree")
-        setup_auto_preview(0, "viewim.integrations.nvim_tree")
+      callback = function(args)
+        map_preview_keys(args.buf, key, "viewim.integrations.nvim_tree")
+        setup_auto_preview(args.buf, "viewim.integrations.nvim_tree")
       end,
     })
   end
@@ -132,9 +136,9 @@ function M.setup(opts)
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("viewim_oil", { clear = true }),
       pattern = "oil",
-      callback = function()
-        map_preview_keys(0, key, "viewim.integrations.oil")
-        setup_auto_preview(0, "viewim.integrations.oil")
+      callback = function(args)
+        map_preview_keys(args.buf, key, "viewim.integrations.oil")
+        setup_auto_preview(args.buf, "viewim.integrations.oil")
       end,
     })
   end
@@ -144,9 +148,9 @@ function M.setup(opts)
     vim.api.nvim_create_autocmd("FileType", {
       group = vim.api.nvim_create_augroup("viewim_neo_tree", { clear = true }),
       pattern = "neo-tree",
-      callback = function()
-        map_preview_keys(0, key, "viewim.integrations.neo_tree")
-        setup_auto_preview(0, "viewim.integrations.neo_tree")
+      callback = function(args)
+        map_preview_keys(args.buf, key, "viewim.integrations.neo_tree")
+        setup_auto_preview(args.buf, "viewim.integrations.neo_tree")
       end,
     })
   end
