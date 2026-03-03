@@ -248,6 +248,8 @@ require("viewim").setup({
 ```
 
 If internal rendering is unavailable or fails, viewim falls back to normal launcher behavior.
+When failure is caused by missing controlling terminal (`/dev/tty`), internal mode
+is auto-disabled for the current Neovim session.
 
 ### 📄 From any buffer
 

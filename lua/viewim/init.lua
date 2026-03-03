@@ -188,7 +188,11 @@ function M.status()
   local enabled = config.options.enabled and "enabled" or "disabled"
   local term = detect.get_terminal() or "unsupported"
   local remote = (config.options.remote and config.options.remote.enabled) and "on" or "off"
-  local internal = (config.options.experimental and config.options.experimental.internal_render) and "on" or "off"
+  local exp = config.options.experimental or {}
+  local internal = exp.internal_render and "on" or "off"
+  if not exp.internal_render and type(exp._auto_disabled_reason) == "string" and exp._auto_disabled_reason ~= "" then
+    internal = "off(auto-disabled)"
+  end
   vim.notify(
     "viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote .. " | internal: " .. internal,
     vim.log.levels.INFO

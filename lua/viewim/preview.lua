@@ -55,6 +55,21 @@ local function dispatch_preview(resolved)
     return
   end
   if attempted and not ok then
+    local exp = config.options and config.options.experimental or nil
+    local reason = (err or ""):lower()
+    local tty_failure = reason:find("/dev/tty", 1, true)
+      or reason:find("controlling terminal", 1, true)
+      or reason:find("not a tty", 1, true)
+
+    if exp and exp.internal_render and tty_failure then
+      exp.internal_render = false
+      exp._auto_disabled_reason = err or "controlling terminal unavailable"
+      vim.notify(
+        "viewim: internal render auto-disabled for this session (no controlling terminal)",
+        vim.log.levels.WARN
+      )
+    end
+
     vim.notify(
       "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or ""),
       vim.log.levels.WARN

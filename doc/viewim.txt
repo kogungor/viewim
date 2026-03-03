@@ -433,6 +433,8 @@ Relative path not found: ~
 `internal render failed, falling back to launcher`: ~
   Experimental internal mode could not render in current environment.
   viewim falls back to normal launcher preview flow.
+  If failure is due to missing controlling terminal (`/dev/tty`), internal mode
+  is auto-disabled for the current Neovim session.
 
 ============================================================================== 
  vim:tw=78:ts=8:ft=help:norl:

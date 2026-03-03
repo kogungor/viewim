@@ -3,6 +3,28 @@ local util = require("viewim.runners.util")
 
 local M = {}
 
+local function has_controlling_tty()
+  if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+    return true
+  end
+
+  local out = vim.fn.system({ "tty" })
+  if vim.v.shell_error ~= 0 then
+    local msg = vim.trim(out or "")
+    if msg == "" then
+      msg = "controlling terminal not available"
+    end
+    return false, msg
+  end
+
+  local tty = vim.trim(out or "")
+  if tty == "" or tty == "not a tty" then
+    return false, "controlling terminal not available"
+  end
+
+  return true
+end
+
 --- Check whether kitty internal rendering is likely available.
 --- @return boolean,string|nil
 function M.is_supported()
@@ -12,6 +34,11 @@ function M.is_supported()
 
   if detect.has_command("kitten") ~= true then
     return false, "'kitten' command not found in $PATH"
+  end
+
+  local has_tty, tty_reason = has_controlling_tty()
+  if not has_tty then
+    return false, tty_reason
   end
 
   return true

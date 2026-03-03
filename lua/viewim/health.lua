@@ -151,6 +151,9 @@ function M.check()
     end
   else
     vim.health.info("experimental.internal_render is disabled")
+    if type(experimental._auto_disabled_reason) == "string" and experimental._auto_disabled_reason ~= "" then
+      vim.health.warn("internal render auto-disabled in this session: " .. experimental._auto_disabled_reason)
+    end
   end
 end
 
