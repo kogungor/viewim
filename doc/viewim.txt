@@ -103,6 +103,10 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
   require("viewim").setup({
     enabled = true,
     keymap = "<leader>p",
+    mouse_preview = {
+      enabled = false,
+      key = "<M-LeftMouse>",
+    },
     supported_extensions = {
       ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
     },
@@ -140,6 +144,16 @@ Options: ~
     Type: string
     Default: `"<leader>p"`
     Keymap to trigger image preview in file explorer buffers.
+
+  `mouse_preview.enabled`                         *viewim-config-mouse-enabled*
+    Type: boolean
+    Default: `false`
+    Enables mouse-triggered preview keymap in explorer buffers.
+
+  `mouse_preview.key`                                 *viewim-config-mouse-key*
+    Type: string
+    Default: `"<M-LeftMouse>"`
+    Mouse keymap used when `mouse_preview.enabled=true`.
 
   `supported_extensions`                          *viewim-config-extensions*
     Type: table (list of strings)
@@ -250,6 +264,9 @@ By default, `<leader>p` is mapped in file explorer buffers (NvimTree, oil,
 neo-tree). This can be changed via the `keymap` option in |viewim-configuration|.
 
 The keymap is buffer-local and only active in supported file explorer buffers.
+
+Optional mouse preview keymap can be enabled with:
+  `mouse_preview = { enabled = true, key = "<M-LeftMouse>" }`
 
 ==============================================================================
 7. INTEGRATIONS                                          *viewim-integrations*

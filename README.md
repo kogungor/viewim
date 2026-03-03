@@ -103,6 +103,10 @@ require("viewim").setup()
 require("viewim").setup({
   enabled = true,
   keymap = "<leader>p",
+  mouse_preview = {
+    enabled = false,
+    key = "<M-LeftMouse>",
+  },
   supported_extensions = {
     ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif",
   },
@@ -133,6 +137,8 @@ require("viewim").setup({
 |---|---|---|---|
 | `enabled` | `bool` | `true` | Enable or disable viewim previews globally |
 | `keymap` | `string` | `"<leader>p"` | Key to trigger image preview in file explorers |
+| `mouse_preview.enabled` | `bool` | `false` | Enable mouse-triggered preview in explorer buffers |
+| `mouse_preview.key` | `string` | `"<M-LeftMouse>"` | Mouse keymap used for preview when enabled |
 | `supported_extensions` | `table` | see above | List of image file extensions to recognize |
 | `integrations.nvim_tree.enabled` | `bool` | `true` | Enable nvim-tree keymap |
 | `integrations.oil.enabled` | `bool` | `true` | Enable oil.nvim keymap |
@@ -182,6 +188,17 @@ require("viewim").setup({
 2. Navigate to an image file
 3. Press `<leader>p` (or your configured keymap)
 4. The image opens in a new terminal window/pane
+
+If enabled, you can also preview via mouse keymap in explorer buffers:
+
+```lua
+require("viewim").setup({
+  mouse_preview = {
+    enabled = true,
+    key = "<M-LeftMouse>",
+  },
+})
+```
 
 ### 📄 From any buffer
 

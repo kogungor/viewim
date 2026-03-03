@@ -10,6 +10,19 @@ local function ensure_config_initialized()
   end
 end
 
+local function map_preview_keys(bufnr, key, module_name)
+  vim.keymap.set("n", key, function()
+    require(module_name).preview()
+  end, { buffer = bufnr, silent = true, desc = "viewim: preview image" })
+
+  local mouse = config.options.mouse_preview or {}
+  if mouse.enabled and type(mouse.key) == "string" and mouse.key ~= "" then
+    vim.keymap.set("n", mouse.key, function()
+      require(module_name).preview()
+    end, { buffer = bufnr, silent = true, desc = "viewim: mouse preview image" })
+  end
+end
+
 --- Setup viewim with user options and register keymaps for integrations.
 --- @param opts table|nil
 function M.setup(opts)
@@ -24,9 +37,7 @@ function M.setup(opts)
       group = vim.api.nvim_create_augroup("viewim_nvim_tree", { clear = true }),
       pattern = "NvimTree",
       callback = function()
-        vim.keymap.set("n", key, function()
-          require("viewim.integrations.nvim_tree").preview()
-        end, { buffer = true, silent = true, desc = "viewim: preview image" })
+        map_preview_keys(0, key, "viewim.integrations.nvim_tree")
       end,
     })
   end
@@ -37,9 +48,7 @@ function M.setup(opts)
       group = vim.api.nvim_create_augroup("viewim_oil", { clear = true }),
       pattern = "oil",
       callback = function()
-        vim.keymap.set("n", key, function()
-          require("viewim.integrations.oil").preview()
-        end, { buffer = true, silent = true, desc = "viewim: preview image" })
+        map_preview_keys(0, key, "viewim.integrations.oil")
       end,
     })
   end
@@ -50,9 +59,7 @@ function M.setup(opts)
       group = vim.api.nvim_create_augroup("viewim_neo_tree", { clear = true }),
       pattern = "neo-tree",
       callback = function()
-        vim.keymap.set("n", key, function()
-          require("viewim.integrations.neo_tree").preview()
-        end, { buffer = true, silent = true, desc = "viewim: preview image" })
+        map_preview_keys(0, key, "viewim.integrations.neo_tree")
       end,
     })
   end

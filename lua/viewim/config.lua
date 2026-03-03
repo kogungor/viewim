@@ -9,6 +9,10 @@ local VALID_KITTY_LAUNCH_TYPES = {
 M.defaults = {
   enabled = true,
   keymap = "<leader>p",
+  mouse_preview = {
+    enabled = false,
+    key = "<M-LeftMouse>",
+  },
   supported_extensions = {
     ".bmp",
     ".jpg",
@@ -175,11 +179,26 @@ local function normalize_enabled(value)
   return true
 end
 
+local function normalize_mouse_preview(opts)
+  opts = opts or {}
+
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = false
+  end
+
+  if type(opts.key) ~= "string" or opts.key == "" then
+    opts.key = "<M-LeftMouse>"
+  end
+
+  return opts
+end
+
 function M.setup(opts)
   opts = opts or {}
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)
 
   M.options.enabled = normalize_enabled(M.options.enabled)
+  M.options.mouse_preview = normalize_mouse_preview(M.options.mouse_preview)
   M.options.integrations = normalize_integrations(M.options.integrations)
   M.options.supported_extensions = normalize_extensions(M.options.supported_extensions)
   M.options.kitty = normalize_kitty(M.options.kitty)
