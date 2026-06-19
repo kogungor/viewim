@@ -27,14 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install stylua
+      - name: Check formatting
         uses: JohnnyMorganz/stylua-action@v4
         with:
           version: latest
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check formatting
-        run: stylua --check lua/ plugin/ test/
+          args: --check lua/ plugin/ test/
 
   test:
     name: Tests (Neovim ${{ matrix.neovim_version }})
