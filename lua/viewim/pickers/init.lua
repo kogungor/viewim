@@ -1,4 +1,5 @@
 local builtin = require("viewim.pickers.builtin")
+local fzflua = require("viewim.pickers.fzflua")
 local snacks = require("viewim.pickers.snacks")
 local telescope = require("viewim.pickers.telescope")
 
@@ -6,23 +7,27 @@ local M = {}
 
 local BACKENDS = {
   builtin = builtin,
+  fzflua = fzflua,
   snacks = snacks,
   telescope = telescope,
 }
 
 local function backend_order(preferred)
   if preferred == "telescope" then
-    return { "telescope", "snacks", "builtin" }
+    return { "telescope", "snacks", "fzflua", "builtin" }
   end
   if preferred == "snacks" then
-    return { "snacks", "telescope", "builtin" }
+    return { "snacks", "telescope", "fzflua", "builtin" }
+  end
+  if preferred == "fzflua" then
+    return { "fzflua", "builtin" }
   end
   if preferred == "builtin" then
     return { "builtin" }
   end
 
   -- auto
-  return { "telescope", "snacks", "builtin" }
+  return { "telescope", "snacks", "fzflua", "builtin" }
 end
 
 function M.resolve_backend(preferred)
