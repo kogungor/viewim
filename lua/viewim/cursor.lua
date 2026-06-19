@@ -41,7 +41,9 @@ local function normalize_markdown_target(raw)
     return nil
   end
 
-  if value:sub(1, 1) == "<" and value:sub(-1) == ">" then
+  -- Track whether angle brackets were present — they explicitly allow spaces in paths
+  local angle_wrapped = value:sub(1, 1) == "<" and value:sub(-1) == ">"
+  if angle_wrapped then
     value = value:sub(2, -2)
   end
 
@@ -49,8 +51,14 @@ local function normalize_markdown_target(raw)
     value = value:sub(2, -2)
   end
 
-  local first = value:match("^([^%s]+)")
-  local target = first or value
+  -- Angle-bracket syntax allows spaces; skip whitespace split only in that case
+  local target
+  if angle_wrapped then
+    target = value
+  else
+    local first = value:match("^([^%s]+)")
+    target = first or value
+  end
 
   if target:sub(1, 1) == "<" and target:sub(-1) == ">" then
     target = target:sub(2, -2)

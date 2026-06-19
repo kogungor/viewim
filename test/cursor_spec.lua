@@ -183,9 +183,28 @@ T["nearest source fallback"]["returns error when no source within scan radius"] 
   end)
 end
 
--- NOTE: test for ![alt](<path with spaces>) is intentionally absent here.
--- This is a known bug tracked in Faz 1 (normalize_markdown_target strips
--- path at first whitespace after removing <> wrappers). The test will be
--- added in cursor_spec.lua once the Faz 1 fix is applied.
+-- Angle-bracket paths (spaces allowed)
+T["angle-bracket path"] = MiniTest.new_set()
+
+T["angle-bracket path"]["extracts path with spaces from ![alt](<path with spaces>)"] = function()
+  local tmp = vim.fn.fnamemodify(vim.fn.tempname(), ":h") .. "/my image.png"
+  vim.fn.writefile({}, tmp)
+
+  with_buffer({ "![alt](<" .. tmp .. ">)" }, 1, 0, function()
+    local src, err = cursor.get_image_source_under_cursor()
+    MiniTest.expect.equality(err, nil)
+    MiniTest.expect.equality(src, vim.fs.normalize(tmp))
+  end)
+
+  vim.fn.delete(tmp)
+end
+
+T["angle-bracket path"]["extracts url from ![alt](<https://example.com/my image.png>)"] = function()
+  with_buffer({ "![alt](<https://example.com/my image.png>)" }, 1, 0, function()
+    local src, err = cursor.get_image_source_under_cursor()
+    MiniTest.expect.equality(err, nil)
+    MiniTest.expect.equality(src, "https://example.com/my image.png")
+  end)
+end
 
 return T

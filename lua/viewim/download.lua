@@ -40,9 +40,8 @@ end
 
 local function make_target_path(cache_dir, source_url)
   local ext = url.extension_from_url(source_url)
-  local hash = vim.fn.sha256(source_url):sub(1, 12)
-  local timestamp = tostring(os.time())
-  return cache_dir .. "/" .. timestamp .. "-" .. hash .. (ext or ".img")
+  local hash = vim.fn.sha256(source_url)
+  return cache_dir .. "/" .. hash .. (ext or ".img")
 end
 
 local function maybe_apply_content_type_extension(target_path, content_type)
