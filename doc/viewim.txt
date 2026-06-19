@@ -292,6 +292,11 @@ Options: ~
     Ghostty preview mode. Supported values: `external`, `tmux`.
     Unsupported values fall back to `"external"` with a warning.
 
+    Note: in `external` mode, both the normal preview and `preview_large`
+    (`<Space>`) open the image in the system viewer (macOS `open`, Linux
+    `xdg-open`). There is no split-pane behavior. Use `tmux` mode if you
+    want a side-by-side pane preview.
+
   `ghostty.opener`                              *viewim-config-ghostty-opener*
     Type: string
     Default: `"auto"`
@@ -375,6 +380,9 @@ Options: ~
     Default: `"large_preview"`
     Action used when `<Space>` is pressed in supported pickers.
     Supported values: `large_preview`, `preview`.
+
+    Note: for Ghostty in `external` mode, `large_preview` and `preview` both
+    open the system viewer — there is no larger split-pane variant.
 
   `experimental.internal_render`               *viewim-config-experimental-internal*
     Type: boolean

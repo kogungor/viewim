@@ -1,5 +1,6 @@
 local detect = require("viewim.detect")
 local util = require("viewim.runners.util")
+local notify = require("viewim.notify")
 
 local M = {}
 
@@ -69,7 +70,7 @@ function M.run(path, opts)
         local msg = util.join_nonempty(data)
         if msg ~= "" then
           vim.schedule(function()
-            vim.notify("viewim: ghostty tmux error: " .. msg, vim.log.levels.ERROR)
+            notify.error("viewim: ghostty tmux error: " .. msg)
           end)
         end
       end,
@@ -103,7 +104,7 @@ function M.run(path, opts)
       local msg = util.join_nonempty(data)
       if msg ~= "" then
         vim.schedule(function()
-          vim.notify("viewim: ghostty opener error: " .. msg, vim.log.levels.ERROR)
+          notify.error("viewim: ghostty opener error: " .. msg)
         end)
       end
     end,

@@ -1,4 +1,5 @@
 local util = require("viewim.runners.util")
+local notify = require("viewim.notify")
 
 local M = {}
 
@@ -36,7 +37,7 @@ function M.run(path, opts)
       local msg = util.join_nonempty(data)
       if msg ~= "" then
         vim.schedule(function()
-          vim.notify("viewim: wezterm error: " .. msg, vim.log.levels.ERROR)
+          notify.error("viewim: wezterm error: " .. msg)
         end)
       end
     end,

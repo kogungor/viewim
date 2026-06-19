@@ -389,10 +389,13 @@ local function cursor_in_tag(cursor_row, cursor_col, tag)
   return true
 end
 
-local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col)
+-- Collect all <img ...> tags (potentially spanning multiple lines) within a
+-- row window around the cursor. Returns a list of tag descriptors with
+-- text, start_row, start_col, end_row, end_col fields.
+local function collect_img_tags_in_window(bufnr, cursor_row, radius)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local from_row = math.max(1, cursor_row - HTML_SCAN_RADIUS)
-  local to_row = math.min(line_count, cursor_row + HTML_SCAN_RADIUS)
+  local from_row = math.max(1, cursor_row - radius)
+  local to_row = math.min(line_count, cursor_row + radius)
   local lines = vim.api.nvim_buf_get_lines(bufnr, from_row - 1, to_row, false)
 
   local tags = {}
@@ -400,25 +403,14 @@ local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col
 
   for i, line in ipairs(lines) do
     local row = from_row + i - 1
-
     if not current then
       local s = find_img_tag_start(line)
       if s then
         local e = line:find(">", s, true)
         if e then
-          table.insert(tags, {
-            text = line:sub(s, e),
-            start_row = row,
-            start_col = s,
-            end_row = row,
-            end_col = e,
-          })
+          table.insert(tags, { text = line:sub(s, e), start_row = row, start_col = s, end_row = row, end_col = e })
         else
-          current = {
-            text = line:sub(s),
-            start_row = row,
-            start_col = s,
-          }
+          current = { text = line:sub(s), start_row = row, start_col = s }
         end
       end
     else
@@ -435,73 +427,36 @@ local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col
     end
   end
 
+  return tags
+end
+
+local function extract_src_from_tag(tag)
+  local src = tag.text:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
+    or tag.text:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
+    or tag.text:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
+  return src and vim.trim(src) or nil
+end
+
+local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col)
+  local tags = collect_img_tags_in_window(bufnr, cursor_row, HTML_SCAN_RADIUS)
   for _, tag in ipairs(tags) do
     if cursor_in_tag(cursor_row, cursor_col, tag) then
-      local src = tag.text:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
-        or tag.text:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
-        or tag.text:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
-      return src and vim.trim(src) or nil
+      return extract_src_from_tag(tag)
     end
   end
-
   return nil
 end
 
 local function html_img_src_near_cursor_multiline(bufnr, cursor_row, cursor_col)
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local from_row = math.max(1, cursor_row - HTML_SCAN_RADIUS)
-  local to_row = math.min(line_count, cursor_row + HTML_SCAN_RADIUS)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, from_row - 1, to_row, false)
-
-  local tags = {}
-  local current = nil
-
-  for i, line in ipairs(lines) do
-    local row = from_row + i - 1
-
-    if not current then
-      local s = find_img_tag_start(line)
-      if s then
-        local e = line:find(">", s, true)
-        if e then
-          table.insert(tags, {
-            text = line:sub(s, e),
-            start_row = row,
-            start_col = s,
-            end_row = row,
-            end_col = e,
-          })
-        else
-          current = {
-            text = line:sub(s),
-            start_row = row,
-            start_col = s,
-          }
-        end
-      end
-    else
-      local e = line:find(">", 1, true)
-      if e then
-        current.text = current.text .. "\n" .. line:sub(1, e)
-        current.end_row = row
-        current.end_col = e
-        table.insert(tags, current)
-        current = nil
-      else
-        current.text = current.text .. "\n" .. line
-      end
-    end
-  end
+  local tags = collect_img_tags_in_window(bufnr, cursor_row, HTML_SCAN_RADIUS)
 
   local best_src = nil
   local best_dist = nil
 
   for _, tag in ipairs(tags) do
-    local src = tag.text:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
-      or tag.text:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
-      or tag.text:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
+    local src = extract_src_from_tag(tag)
 
-    if src and vim.trim(src) ~= "" then
+    if src and src ~= "" then
       local row_dist = 0
       if cursor_row < tag.start_row then
         row_dist = tag.start_row - cursor_row

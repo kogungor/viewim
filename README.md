@@ -43,6 +43,8 @@ Fast image preview for Neovim with a launcher-first approach.
   - `curl` for remote URL previews
   - `tmux` for `ghostty.mode = "tmux"`
 
+> **Ghostty note:** in `external` mode (the default), previews open in the system viewer (`open` / `xdg-open`). There is no split-pane. Use `ghostty.mode = "tmux"` for a side-by-side pane. The `<Space>` (`large_preview`) action behaves identically to normal preview in `external` mode.
+
 ## 📦 Installation (lazy.nvim)
 
 ```lua
