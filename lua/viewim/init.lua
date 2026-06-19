@@ -201,6 +201,12 @@ end
 function M.setup(opts)
   config.setup(opts)
 
+  -- Clear all integration augroups unconditionally so that re-calling setup()
+  -- with a disabled integration actually removes its handlers
+  vim.api.nvim_create_augroup("viewim_nvim_tree", { clear = true })
+  vim.api.nvim_create_augroup("viewim_oil", { clear = true })
+  vim.api.nvim_create_augroup("viewim_neo_tree", { clear = true })
+
   local key = config.options.keymap
   local cursor_key = config.options.cursor_keymap
   local integrations = config.options.integrations

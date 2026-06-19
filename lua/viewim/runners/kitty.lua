@@ -34,6 +34,7 @@ local function detached_launch(path, listen_on, launch_type)
     "kitty",
     "+kitten",
     "icat",
+    "--",
     path,
   })
 
@@ -101,6 +102,7 @@ function M.run(path, opts)
     "kitty",
     "+kitten",
     "icat",
+    "--",
     path,
   })
 

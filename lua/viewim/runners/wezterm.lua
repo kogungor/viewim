@@ -29,7 +29,7 @@ function M.run(path, opts)
     vim.list_extend(cmd, { "--percent", tostring(opts.split_percent) })
   end
 
-  vim.list_extend(cmd, { "--", "wezterm", "imgcat", path })
+  vim.list_extend(cmd, { "--", "wezterm", "imgcat", "--", path })
 
   local job_id = vim.fn.jobstart(cmd, {
     on_stderr = function(_, data)

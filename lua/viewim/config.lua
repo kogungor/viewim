@@ -121,6 +121,7 @@ local function normalize_extensions(values)
   end
 
   local normalized = {}
+  local seen = {}
   for _, ext in ipairs(values) do
     if type(ext) == "string" then
       local candidate = ext:lower()
@@ -129,7 +130,10 @@ local function normalize_extensions(values)
       end
 
       if candidate:match("^%.[a-z0-9]+$") then
-        table.insert(normalized, candidate)
+        if not seen[candidate] then
+          seen[candidate] = true
+          table.insert(normalized, candidate)
+        end
       else
         warn("viewim: ignoring invalid extension: " .. ext)
       end
