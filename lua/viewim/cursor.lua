@@ -6,6 +6,8 @@ local HTML_SCAN_RADIUS = 20
 local NEAREST_SCAN_RADIUS = 8
 local CACHE_MAX_LINES = 5000
 local SOURCE_CACHE = {}
+local REF_INDEX = {} -- [bufnr] = { [normalized_id] = target }
+local REF_INDEX_WATCHING = {} -- [bufnr] = true (autocmd registered)
 
 local function col_in_range(col, s, e)
   return col >= s and col <= e
@@ -287,21 +289,51 @@ local function first_markdown_reference_id_in_line(line)
   return normalize_reference_id(id)
 end
 
+local function build_ref_index(bufnr)
+  local index = {}
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  for _, line in ipairs(lines) do
+    local ref_id, rhs = line:match("^%s*%[([^%]]+)%]%s*:%s*(.+)%s*$")
+    if ref_id and rhs then
+      local norm = normalize_reference_id(ref_id)
+      if norm and not index[norm] then
+        index[norm] = normalize_markdown_target(rhs)
+      end
+    end
+  end
+  return index
+end
+
+local function get_ref_index(bufnr)
+  if not REF_INDEX[bufnr] then
+    REF_INDEX[bufnr] = build_ref_index(bufnr)
+
+    if not REF_INDEX_WATCHING[bufnr] then
+      REF_INDEX_WATCHING[bufnr] = true
+      vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufWritePost" }, {
+        buffer = bufnr,
+        callback = function()
+          REF_INDEX[bufnr] = nil
+        end,
+      })
+      vim.api.nvim_create_autocmd("BufDelete", {
+        buffer = bufnr,
+        callback = function()
+          REF_INDEX[bufnr] = nil
+          REF_INDEX_WATCHING[bufnr] = nil
+        end,
+      })
+    end
+  end
+  return REF_INDEX[bufnr]
+end
+
 local function resolve_markdown_reference(id, bufnr)
   local wanted = normalize_reference_id(id)
   if not wanted then
     return nil
   end
-
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  for _, line in ipairs(lines) do
-    local ref_id, rhs = line:match("^%s*%[([^%]]+)%]%s*:%s*(.+)%s*$")
-    if ref_id and rhs and normalize_reference_id(ref_id) == wanted then
-      return normalize_markdown_target(rhs)
-    end
-  end
-
-  return nil
+  return get_ref_index(bufnr)[wanted]
 end
 
 local function html_img_src_under_cursor(line, col)
@@ -497,9 +529,20 @@ end
 
 local function nearest_source_around_cursor(bufnr, row)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  -- Read only the window around the cursor instead of the entire buffer
+  local start_0 = math.max(0, row - NEAREST_SCAN_RADIUS - 1)
+  local end_0 = math.min(line_count, row + NEAREST_SCAN_RADIUS)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_0, end_0, false)
+
+  local function get_line(abs_row)
+    local idx = abs_row - start_0
+    return lines[idx]
+  end
 
   local function source_from_line(line)
+    if not line then
+      return nil
+    end
     local src = first_markdown_image_in_line(line)
     if src then
       return src
@@ -516,18 +559,15 @@ local function nearest_source_around_cursor(bufnr, row)
     return first_html_img_src_in_line(line)
   end
 
-  local current_line = lines[row]
-  if current_line then
-    local src = source_from_line(current_line)
-    if src then
-      return src, 0
-    end
+  local src = source_from_line(get_line(row))
+  if src then
+    return src, 0
   end
 
   for offset = 1, NEAREST_SCAN_RADIUS do
     local up = row - offset
     if up >= 1 and up <= line_count then
-      local src = source_from_line(lines[up])
+      src = source_from_line(get_line(up))
       if src then
         return src, offset
       end
@@ -535,7 +575,7 @@ local function nearest_source_around_cursor(bufnr, row)
 
     local down = row + offset
     if down >= 1 and down <= line_count then
-      local src = source_from_line(lines[down])
+      src = source_from_line(get_line(down))
       if src then
         return src, offset
       end

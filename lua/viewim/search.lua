@@ -24,28 +24,39 @@ local function fuzzy_match(query, text)
 end
 
 local function collect_by_extensions(root, extensions, include_hidden)
+  local ext_set = {}
+  for _, ext in ipairs(extensions) do
+    ext_set[ext] = true
+  end
+
   local unique = {}
   local paths = {}
+  local queue = { root }
 
-  for _, ext in ipairs(extensions) do
-    local pattern = "**/*" .. ext
-    local matches = vim.fn.globpath(root, pattern, false, true)
-    for _, path in ipairs(matches) do
-      local normalized = vim.fs.normalize(path)
-      if not unique[normalized] then
-        unique[normalized] = true
-        table.insert(paths, normalized)
-      end
-    end
+  while #queue > 0 do
+    local dir = table.remove(queue)
+    local handle = vim.uv.fs_scandir(dir)
+    if handle then
+      while true do
+        local name, ftype = vim.uv.fs_scandir_next(handle)
+        if not name then
+          break
+        end
 
-    if include_hidden then
-      local hidden_pattern = "**/.*" .. ext
-      local hidden = vim.fn.globpath(root, hidden_pattern, false, true)
-      for _, path in ipairs(hidden) do
-        local normalized = vim.fs.normalize(path)
-        if not unique[normalized] then
-          unique[normalized] = true
-          table.insert(paths, normalized)
+        local is_hidden = name:sub(1, 1) == "."
+        local full = dir .. "/" .. name
+
+        if ftype == "directory" and (include_hidden or not is_hidden) then
+          queue[#queue + 1] = full
+        elseif ftype == "file" and (include_hidden or not is_hidden) then
+          local ext = name:match("(%.[^.]+)$")
+          if ext and ext_set[ext:lower()] then
+            local normalized = vim.fs.normalize(full)
+            if not unique[normalized] then
+              unique[normalized] = true
+              paths[#paths + 1] = normalized
+            end
+          end
         end
       end
     end
