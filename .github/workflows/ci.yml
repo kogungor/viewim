@@ -7,25 +7,65 @@ on:
     branches: [dev, main]
 
 jobs:
-  smoke:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Install luacheck
+        run: |
+          sudo apt-get install -y lua5.1 luarocks
+          sudo luarocks install luacheck
+
+      - name: Run luacheck
+        run: luacheck lua/ plugin/ --codes
+
+  format:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stylua
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          version: latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check test file formatting
+        run: stylua --check test/
+        # TODO: extend to `lua/ plugin/` after running: stylua lua/ plugin/
+
+  test:
+    name: Tests (Neovim ${{ matrix.neovim_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        neovim_version: [stable, nightly]
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Neovim
         uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-          version: stable
+          version: ${{ matrix.neovim_version }}
 
-      - name: Module smoke checks
+      - name: Install mini.nvim
+        run: git clone --depth 1 https://github.com/echasnovski/mini.nvim /tmp/mini.nvim
+
+      - name: Module smoke test
         run: |
-          nvim --headless -u NONE -i NONE \
-            "+set shada=\"\"" \
+          nvim --headless --noplugin \
+            -u NONE \
             "+set rtp+=${GITHUB_WORKSPACE}" \
             "+lua require('viewim').setup({})" \
             "+lua require('viewim.cursor')" \
             "+lua require('viewim.preview')" \
             "+lua require('viewim.health')" \
             "+qa!"
+
+      - name: Run unit tests
+        run: nvim --headless --noplugin -u test/minimal_init.lua -S test/run.lua 2>&1
