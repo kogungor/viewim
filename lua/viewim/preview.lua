@@ -72,11 +72,7 @@ local function dispatch_preview(resolved, mode_opts)
   local kitty_opts, wezterm_opts, ghostty_opts = merged_options(mode_opts)
 
   if not mode_opts or not mode_opts.large then
-    local attempted, ok, err = renderers.try_render(
-      resolved,
-      term,
-      config.options and config.options.experimental
-    )
+    local attempted, ok, err = renderers.try_render(resolved, term, config.options and config.options.experimental)
     if attempted and ok then
       return
     end
@@ -90,13 +86,9 @@ local function dispatch_preview(resolved, mode_opts)
       if exp and exp.internal_render and tty_failure then
         exp.internal_render = false
         exp._auto_disabled_reason = err or "controlling terminal unavailable"
-        notify.warn(
-          "viewim: internal render unavailable (no controlling terminal), auto-disabled for this session"
-        )
+        notify.warn("viewim: internal render unavailable (no controlling terminal), auto-disabled for this session")
       else
-        notify.warn(
-          "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or "")
-        )
+        notify.warn("viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or ""))
       end
     end
   end
@@ -108,9 +100,7 @@ local function dispatch_preview(resolved, mode_opts)
   elseif term == "ghostty" then
     run_or_notify(ghostty_runner.run(resolved, ghostty_opts))
   else
-    notify.error(
-      "viewim: unsupported terminal. Requires kitty, wezterm, or ghostty."
-    )
+    notify.error("viewim: unsupported terminal. Requires kitty, wezterm, or ghostty.")
   end
 end
 

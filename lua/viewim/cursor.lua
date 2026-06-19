@@ -45,8 +45,7 @@ local function normalize_markdown_target(raw)
     value = value:sub(2, -2)
   end
 
-  if (value:sub(1, 1) == '"' and value:sub(-1) == '"')
-    or (value:sub(1, 1) == "'" and value:sub(-1) == "'") then
+  if (value:sub(1, 1) == '"' and value:sub(-1) == '"') or (value:sub(1, 1) == "'" and value:sub(-1) == "'") then
     value = value:sub(2, -2)
   end
 
@@ -57,8 +56,7 @@ local function normalize_markdown_target(raw)
     target = target:sub(2, -2)
   end
 
-  if (target:sub(1, 1) == '"' and target:sub(-1) == '"')
-    or (target:sub(1, 1) == "'" and target:sub(-1) == "'") then
+  if (target:sub(1, 1) == '"' and target:sub(-1) == '"') or (target:sub(1, 1) == "'" and target:sub(-1) == "'") then
     target = target:sub(2, -2)
   end
 

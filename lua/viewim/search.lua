@@ -66,11 +66,7 @@ function M.find(query)
   local root = vim.fn.getcwd()
   local q = vim.trim(query or "")
 
-  local raw_paths = collect_by_extensions(
-    root,
-    config.options.supported_extensions or {},
-    opts.include_hidden == true
-  )
+  local raw_paths = collect_by_extensions(root, config.options.supported_extensions or {}, opts.include_hidden == true)
 
   local items = {}
   for _, path in ipairs(raw_paths) do

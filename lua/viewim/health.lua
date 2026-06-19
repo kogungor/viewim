@@ -187,9 +187,7 @@ function M.check()
 
   if has_avif then
     vim.health.info("'.avif' is enabled in supported_extensions")
-    vim.health.warn(
-      "AVIF rendering depends on terminal/image codec support and may fail on some systems"
-    )
+    vim.health.warn("AVIF rendering depends on terminal/image codec support and may fail on some systems")
   else
     vim.health.info("'.avif' is not enabled in supported_extensions")
   end

@@ -66,15 +66,20 @@ end
 T["reference markdown"] = MiniTest.new_set()
 
 T["reference markdown"]["resolves ![alt][ref] using [ref]: definition"] = function()
-  with_buffer({
-    "![logo][img-ref]",
-    "",
-    "[img-ref]: https://example.com/logo.png",
-  }, 1, 0, function()
-    local src, err = cursor.get_image_source_under_cursor()
-    MiniTest.expect.equality(err, nil)
-    MiniTest.expect.equality(src, "https://example.com/logo.png")
-  end)
+  with_buffer(
+    {
+      "![logo][img-ref]",
+      "",
+      "[img-ref]: https://example.com/logo.png",
+    },
+    1,
+    0,
+    function()
+      local src, err = cursor.get_image_source_under_cursor()
+      MiniTest.expect.equality(err, nil)
+      MiniTest.expect.equality(src, "https://example.com/logo.png")
+    end
+  )
 end
 
 T["reference markdown"]["returns nil src when ref has no definition"] = function()
@@ -85,14 +90,19 @@ T["reference markdown"]["returns nil src when ref has no definition"] = function
 end
 
 T["reference markdown"]["ref lookup is case-insensitive"] = function()
-  with_buffer({
-    "![alt][MyRef]",
-    "[myref]: https://example.com/image.png",
-  }, 1, 0, function()
-    local src, err = cursor.get_image_source_under_cursor()
-    MiniTest.expect.equality(err, nil)
-    MiniTest.expect.equality(src, "https://example.com/image.png")
-  end)
+  with_buffer(
+    {
+      "![alt][MyRef]",
+      "[myref]: https://example.com/image.png",
+    },
+    1,
+    0,
+    function()
+      local src, err = cursor.get_image_source_under_cursor()
+      MiniTest.expect.equality(err, nil)
+      MiniTest.expect.equality(src, "https://example.com/image.png")
+    end
+  )
 end
 
 -- HTML img tag (single line)
@@ -126,29 +136,39 @@ end
 T["html img multi-line"] = MiniTest.new_set()
 
 T["html img multi-line"]["extracts src from tag spanning multiple lines"] = function()
-  with_buffer({
-    "<img",
-    '  src="https://example.com/wide.png"',
-    "  alt='wide image'>",
-  }, 1, 0, function()
-    local src, err = cursor.get_image_source_under_cursor()
-    MiniTest.expect.equality(err, nil)
-    MiniTest.expect.equality(src, "https://example.com/wide.png")
-  end)
+  with_buffer(
+    {
+      "<img",
+      '  src="https://example.com/wide.png"',
+      "  alt='wide image'>",
+    },
+    1,
+    0,
+    function()
+      local src, err = cursor.get_image_source_under_cursor()
+      MiniTest.expect.equality(err, nil)
+      MiniTest.expect.equality(src, "https://example.com/wide.png")
+    end
+  )
 end
 
 -- Nearest-source fallback
 T["nearest source fallback"] = MiniTest.new_set()
 
 T["nearest source fallback"]["finds image on adjacent line when current line has none"] = function()
-  with_buffer({
-    "![alt](https://example.com/near.png)",
-    "plain text here",
-  }, 2, 0, function()
-    local src, err = cursor.get_image_source_under_cursor()
-    MiniTest.expect.equality(err, nil)
-    MiniTest.expect.equality(src, "https://example.com/near.png")
-  end)
+  with_buffer(
+    {
+      "![alt](https://example.com/near.png)",
+      "plain text here",
+    },
+    2,
+    0,
+    function()
+      local src, err = cursor.get_image_source_under_cursor()
+      MiniTest.expect.equality(err, nil)
+      MiniTest.expect.equality(src, "https://example.com/near.png")
+    end
+  )
 end
 
 T["nearest source fallback"]["returns error when no source within scan radius"] = function()

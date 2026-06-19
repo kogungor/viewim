@@ -33,9 +33,8 @@ jobs:
           version: latest
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check test file formatting
-        run: stylua --check test/
-        # TODO: extend to `lua/ plugin/` after running: stylua lua/ plugin/
+      - name: Check formatting
+        run: stylua --check lua/ plugin/ test/
 
   test:
     name: Tests (Neovim ${{ matrix.neovim_version }})
