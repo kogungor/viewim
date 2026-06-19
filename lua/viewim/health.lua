@@ -22,7 +22,7 @@ function M.check()
   if term then
     vim.health.ok("Terminal detected: " .. term)
   else
-    vim.health.warn("No supported terminal detected (need kitty, wezterm, or ghostty)")
+    vim.health.warn("No supported terminal detected (need kitty, wezterm, ghostty, or iTerm2)")
   end
 
   -- Check CLI tools
@@ -60,6 +60,33 @@ function M.check()
       vim.health.ok("'wezterm' command found in $PATH")
     else
       vim.health.error("'wezterm' command not found in $PATH")
+    end
+  elseif term == "iterm2" then
+    local cfg = config.options
+    local iterm2 = cfg.iterm2 or {}
+    if iterm2.enabled == false then
+      vim.health.warn("iTerm2 backend is disabled (iterm2.enabled = false)")
+    else
+      local imgcat_paths = {
+        "imgcat",
+        "/usr/local/bin/imgcat",
+        vim.fn.expand("~") .. "/.iterm2/imgcat",
+      }
+      local found = nil
+      for _, p in ipairs(imgcat_paths) do
+        if vim.fn.executable(p) == 1 then
+          found = p
+          break
+        end
+      end
+      if found then
+        vim.health.ok("'imgcat' found: " .. found)
+      else
+        vim.health.error(
+          "'imgcat' not found — install via iTerm2 shell integration: "
+            .. "curl -L https://iterm2.com/shell_integration/install_shell_integration.bash | bash"
+        )
+      end
     end
   elseif term == "ghostty" then
     local cfg = config.options
@@ -153,6 +180,7 @@ function M.check()
 
     local has_telescope = pcall(require, "telescope")
     local has_snacks = pcall(require, "snacks") or pcall(require, "snacks.picker")
+    local has_fzflua = pcall(require, "fzf-lua")
 
     if has_telescope then
       vim.health.ok("telescope is available")
@@ -164,6 +192,12 @@ function M.check()
       vim.health.ok("snacks picker is available")
     else
       vim.health.info("snacks picker is not installed (optional)")
+    end
+
+    if has_fzflua then
+      vim.health.ok("fzf-lua is available")
+    else
+      vim.health.info("fzf-lua is not installed (optional)")
     end
 
     local pickers = require("viewim.pickers")
@@ -190,6 +224,41 @@ function M.check()
     vim.health.warn("AVIF rendering depends on terminal/image codec support and may fail on some systems")
   else
     vim.health.info("'.avif' is not enabled in supported_extensions")
+  end
+
+  local svg_opts = cfg.svg or {}
+  if svg_opts.enabled == false then
+    vim.health.info("SVG support is disabled (svg.enabled = false)")
+  else
+    local converter = svg_opts.converter or "auto"
+    local has_rsvg = detect.has_command("rsvg-convert")
+    local has_magick = detect.has_command("magick")
+
+    if converter == "rsvg-convert" then
+      if has_rsvg then
+        vim.health.ok("SVG converter: rsvg-convert found")
+      else
+        vim.health.error("SVG converter 'rsvg-convert' not found (brew install librsvg / apt install librsvg2-bin)")
+      end
+    elseif converter == "magick" then
+      if has_magick then
+        vim.health.ok("SVG converter: magick (ImageMagick) found")
+      else
+        vim.health.error("SVG converter 'magick' not found (brew install imagemagick / apt install imagemagick)")
+      end
+    else
+      -- auto
+      if has_rsvg then
+        vim.health.ok("SVG converter: rsvg-convert found (auto)")
+      elseif has_magick then
+        vim.health.ok("SVG converter: magick (ImageMagick) found (auto)")
+      else
+        vim.health.warn(
+          "No SVG converter found — SVG preview will fail. "
+            .. "Install rsvg-convert (librsvg) or magick (ImageMagick)"
+        )
+      end
+    end
   end
 
   vim.health.start("viewim experimental")

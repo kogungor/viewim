@@ -169,6 +169,8 @@ M.defaults = {
     max_bytes = 10485760,
     cache_dir = vim.fs.normalize(vim.fn.stdpath("cache") .. "/viewim/remote"),
     require_https = false,
+    max_age_days = 0,
+    max_cache_bytes = 0,
   },
   search = {
     enabled = true,
