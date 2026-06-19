@@ -41,7 +41,7 @@ local function run_or_notify(ok, err)
   if ok then
     return
   end
-  vim.notify(err or "viewim: preview command failed", vim.log.levels.ERROR)
+  notify.error(err or "viewim: preview command failed")
 end
 
 local function merged_options(mode_opts)
@@ -141,7 +141,11 @@ local function preview_with_mode(raw_path, mode_opts)
 
         local resolved, v_err, level = validate_path(local_path)
         if not resolved then
-          vim.notify(v_err, level or vim.log.levels.ERROR)
+          if level == vim.log.levels.WARN then
+            notify.warn(v_err)
+          else
+            notify.error(v_err)
+          end
           return
         end
 
@@ -159,7 +163,11 @@ local function preview_with_mode(raw_path, mode_opts)
 
   local resolved, err, level = validate_path(raw_path)
   if not resolved then
-    vim.notify(err, level or vim.log.levels.ERROR)
+    if level == vim.log.levels.WARN then
+      notify.warn(err)
+    else
+      notify.error(err)
+    end
     return
   end
 

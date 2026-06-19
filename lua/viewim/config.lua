@@ -1,3 +1,60 @@
+---@class ViewimKittyConfig
+---@field listen_on string|nil
+---@field launch_type "os-window"|"tab"|"window"
+
+---@class ViewimWeztermConfig
+---@field split_direction "left"|"right"|"top"|"bottom"
+---@field split_percent number|nil
+
+---@class ViewimGhosttyConfig
+---@field mode "external"|"tmux"
+---@field opener string
+---@field tmux_split_direction "left"|"right"|"top"|"bottom"
+---@field tmux_split_percent number|nil
+---@field tmux_command string
+
+---@class ViewimRemoteConfig
+---@field enabled boolean
+---@field timeout_ms number
+---@field max_bytes number
+---@field cache_dir string
+---@field require_https boolean
+
+---@class ViewimSearchConfig
+---@field enabled boolean
+---@field preferred_picker "auto"|"telescope"|"snacks"|"builtin"
+---@field max_results number
+---@field include_hidden boolean
+---@field selection_preview boolean
+---@field selection_preview_debounce_ms number
+---@field space_action "large_preview"|"preview"
+
+---@class ViewimIntegrationEntry
+---@field enabled boolean
+---@field resolve_path (fun(bufnr:integer):string|nil)|nil
+
+---@class ViewimIntegrationsConfig
+---@field nvim_tree ViewimIntegrationEntry
+---@field oil ViewimIntegrationEntry
+---@field neo_tree ViewimIntegrationEntry
+
+---@class ViewimExperimentalConfig
+---@field internal_render boolean
+
+---@class ViewimConfig
+---@field enabled boolean
+---@field quiet_warnings boolean
+---@field keymap string
+---@field cursor_keymap string
+---@field supported_extensions string[]
+---@field kitty ViewimKittyConfig
+---@field wezterm ViewimWeztermConfig
+---@field ghostty ViewimGhosttyConfig
+---@field remote ViewimRemoteConfig
+---@field search ViewimSearchConfig
+---@field integrations ViewimIntegrationsConfig
+---@field experimental ViewimExperimentalConfig
+
 local M = {}
 
 local VALID_KITTY_LAUNCH_TYPES = {
@@ -404,6 +461,7 @@ local function normalize_experimental(opts)
   return opts
 end
 
+---@param opts ViewimConfig|nil
 function M.setup(opts)
   opts = opts or {}
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)

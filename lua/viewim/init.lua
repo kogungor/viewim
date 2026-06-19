@@ -265,22 +265,22 @@ end
 function M.enable()
   ensure_config_initialized()
   config.options.enabled = true
-  vim.notify("viewim: enabled", vim.log.levels.INFO)
+  notify.info("viewim: enabled")
 end
 
 function M.disable()
   ensure_config_initialized()
   config.options.enabled = false
-  vim.notify("viewim: disabled", vim.log.levels.INFO)
+  notify.info("viewim: disabled")
 end
 
 function M.toggle()
   ensure_config_initialized()
   config.options.enabled = not M.is_enabled()
   if config.options.enabled then
-    vim.notify("viewim: enabled", vim.log.levels.INFO)
+    notify.info("viewim: enabled")
   else
-    vim.notify("viewim: disabled", vim.log.levels.INFO)
+    notify.info("viewim: disabled")
   end
 end
 
@@ -294,9 +294,8 @@ function M.status()
   if not exp.internal_render and type(exp._auto_disabled_reason) == "string" and exp._auto_disabled_reason ~= "" then
     internal = "off(auto-disabled)"
   end
-  vim.notify(
-    "viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote .. " | internal: " .. internal,
-    vim.log.levels.INFO
+  notify.info(
+    "viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote .. " | internal: " .. internal
   )
 end
 

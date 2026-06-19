@@ -57,7 +57,7 @@ local function detached_launch(path, listen_on, launch_type)
       end
 
       vim.schedule(function()
-        vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
+        notify.error("viewim: kitty error: " .. msg)
       end)
     end,
   })
@@ -131,7 +131,7 @@ function M.run(path, opts)
         vim.schedule(function()
           local ok, err = detached_launch(path, retry_listen, launch_type)
           if not ok and err then
-            vim.notify(err, vim.log.levels.ERROR)
+            notify.error(err)
           end
         end)
         return
@@ -141,7 +141,7 @@ function M.run(path, opts)
         vim.schedule(function()
           local ok, err = detached_launch(path, listen_on, launch_type)
           if not ok and err then
-            vim.notify(err, vim.log.levels.ERROR)
+            notify.error(err)
           end
         end)
         return
@@ -153,7 +153,7 @@ function M.run(path, opts)
 
       local msg = stderr_msg ~= "" and stderr_msg or ("kitty launch exited with code " .. code)
       vim.schedule(function()
-        vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
+        notify.error("viewim: kitty error: " .. msg)
       end)
     end,
   })
