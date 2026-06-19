@@ -67,6 +67,16 @@ SVG files are converted to a temporary PNG before preview.
 Using lazy.nvim: >lua
   {
     "kogungor/viewim",
+    opts = {
+      keymap = "<leader>p",
+      cursor_keymap = "<leader>wi",
+    },
+  }
+<
+
+Using lazy.nvim (explicit config): >lua
+  {
+    "kogungor/viewim",
     config = function()
       require("viewim").setup()
     end,
@@ -106,6 +116,13 @@ Kitty users (required): ~
   })
 <
   Restart kitty after changing kitty.conf.
+
+iTerm2 users: ~
+  Install imgcat via iTerm2 shell integration: >sh
+  curl -L https://iterm2.com/shell_integration/install_shell_integration.bash | bash
+<
+  Restart your shell. viewim detects iTerm2 automatically via TERM_PROGRAM.
+  Run `:checkhealth viewim` to confirm imgcat is found.
 
 ==============================================================================
 4. CONFIGURATION                                        *viewim-configuration*
@@ -470,6 +487,7 @@ Options: ~
 :ViewImageAtCursor      Preview markdown/html image source under cursor.
                         Supported patterns:
                         - `![alt](path-or-url)`
+                        - `![](<path with spaces>)`
                         - `![alt][id]` with `[id]: path-or-url`
                         - `<img src="path-or-url" ...>` (single-line or multi-line)
                         If cursor is not directly on image syntax, nearest image
@@ -609,7 +627,7 @@ Checks performed:
 - `.avif` enabled status and compatibility warning
 - experimental internal-render capability state
 
-============================================================================== 
+==============================================================================
 10. TROUBLESHOOTING                             *viewim-troubleshooting*
 
 No preview appears in kitty: ~
@@ -640,6 +658,34 @@ No preview appears in Ghostty: ~
   3. If using `ghostty.mode = "tmux"`, run Neovim inside tmux and ensure
      `tmux` command is in `$PATH`.
   4. You can set `ghostty.tmux_command` explicitly in setup.
+
+No preview in iTerm2: ~
+  1. Run `:checkhealth viewim`.
+  2. Ensure `imgcat` is installed via iTerm2 shell integration:
+       curl -L https://iterm2.com/shell_integration/install_shell_integration.bash | bash
+  3. Restart your shell. Verify `~/.iterm2/imgcat` exists.
+  4. If running outside iTerm2, set `force_terminal = "iterm2"` in setup.
+
+SVG preview fails: ~
+  1. Install `librsvg` (provides `rsvg-convert`):
+       macOS: brew install librsvg
+       Linux: apt-get install librsvg2-bin / dnf install librsvg2-tools
+  2. Or install ImageMagick v7:
+       macOS: brew install imagemagick
+       Linux: apt-get install imagemagick
+  3. Set `svg.converter = "rsvg-convert"` or `"magick"` to force one explicitly.
+  4. Run `:checkhealth viewim` to confirm the converter is found.
+
+Terminal not detected (SSH, sudo, nested tmux): ~
+  Set `force_terminal` in setup to explicitly name your backend: >lua
+    require("viewim").setup({ force_terminal = "kitty" })
+<
+
+Cache cleanup does nothing: ~
+  Ensure `remote.max_age_days` or `remote.max_cache_bytes` is greater than 0.
+  Both default to 0 (disabled). Example: >lua
+    remote = { max_age_days = 30, max_cache_bytes = 524288000 }
+<
 
 Relative path not found: ~
   Use an absolute path in `:ViewImage /full/path/to/file.png`.
