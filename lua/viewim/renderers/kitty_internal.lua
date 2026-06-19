@@ -104,14 +104,14 @@ function M.render(path)
     return false, "failed to start kitten icat job"
   end
 
-  local wait_result = vim.fn.jobwait({ job_id }, 5000)
-  if wait_result[1] == -1 then
+  -- vim.wait processes the event loop while waiting, unlike jobwait which blocks it
+  local completed = vim.wait(5000, function()
+    return done
+  end, 10)
+
+  if not completed then
     vim.fn.jobstop(job_id)
     return false, "kitten icat timed out"
-  end
-
-  if not done then
-    return false, "kitten icat did not complete"
   end
 
   return ok, err_msg
