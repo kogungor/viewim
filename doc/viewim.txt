@@ -360,8 +360,8 @@ Options: ~
     Default: `"kitten icat --hold"`
     Command executed in the new tmux split pane when tmux mode is enabled.
 
-    Security note: this value is passed directly to `tmux new-window` and then
-    to the shell. Do not set it to any user-controlled or untrusted input.
+    Security note: this value is passed directly to `tmux new-window -e` and
+    then to the shell. Do not set it to any user-controlled or untrusted input.
 
   `iterm2.enabled`                               *viewim-config-iterm2-enabled*
     Type: boolean
@@ -702,6 +702,32 @@ Relative path not found: ~
   viewim falls back to normal launcher preview flow.
   If failure is due to missing controlling terminal (`/dev/tty`), internal mode
   is auto-disabled for the current Neovim session.
+
+No preview in iTerm2: ~
+  1. Run `:checkhealth viewim`.
+  2. Ensure `imgcat` is installed via iTerm2 shell integration:
+       curl -L https://iterm2.com/shell_integration/install_shell_integration.bash | bash
+  3. Restart your shell. Verify `~/.iterm2/imgcat` exists.
+  4. If running outside iTerm2, set `force_terminal = "iterm2"` in setup.
+
+SVG preview fails: ~
+  1. Install `librsvg` (provides `rsvg-convert`):
+       macOS: brew install librsvg
+       Linux: apt-get install librsvg2-bin / dnf install librsvg2-tools
+  2. Or install ImageMagick v7:
+       macOS: brew install imagemagick
+       Linux: apt-get install imagemagick
+  3. Set `svg.converter = "rsvg-convert"` or `"magick"` to force one explicitly.
+  4. Run `:checkhealth viewim` to confirm the converter is found.
+
+Terminal not detected (SSH, sudo, nested tmux): ~
+  Set `force_terminal` in setup to explicitly name your backend:
+    require("viewim").setup({ force_terminal = "kitty" })
+
+Cache cleanup does nothing: ~
+  Ensure `remote.max_age_days` or `remote.max_cache_bytes` is greater than 0.
+  Both default to 0 (disabled). Example:
+    remote = { max_age_days = 30, max_cache_bytes = 524288000 }
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:
