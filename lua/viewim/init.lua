@@ -201,6 +201,12 @@ end
 function M.setup(opts)
   config.setup(opts)
 
+  -- Clear all integration augroups unconditionally so that re-calling setup()
+  -- with a disabled integration actually removes its handlers
+  vim.api.nvim_create_augroup("viewim_nvim_tree", { clear = true })
+  vim.api.nvim_create_augroup("viewim_oil", { clear = true })
+  vim.api.nvim_create_augroup("viewim_neo_tree", { clear = true })
+
   local key = config.options.keymap
   local cursor_key = config.options.cursor_keymap
   local integrations = config.options.integrations
@@ -259,22 +265,22 @@ end
 function M.enable()
   ensure_config_initialized()
   config.options.enabled = true
-  vim.notify("viewim: enabled", vim.log.levels.INFO)
+  notify.info("viewim: enabled")
 end
 
 function M.disable()
   ensure_config_initialized()
   config.options.enabled = false
-  vim.notify("viewim: disabled", vim.log.levels.INFO)
+  notify.info("viewim: disabled")
 end
 
 function M.toggle()
   ensure_config_initialized()
   config.options.enabled = not M.is_enabled()
   if config.options.enabled then
-    vim.notify("viewim: enabled", vim.log.levels.INFO)
+    notify.info("viewim: enabled")
   else
-    vim.notify("viewim: disabled", vim.log.levels.INFO)
+    notify.info("viewim: disabled")
   end
 end
 
@@ -288,9 +294,8 @@ function M.status()
   if not exp.internal_render and type(exp._auto_disabled_reason) == "string" and exp._auto_disabled_reason ~= "" then
     internal = "off(auto-disabled)"
   end
-  vim.notify(
-    "viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote .. " | internal: " .. internal,
-    vim.log.levels.INFO
+  notify.info(
+    "viewim: " .. enabled .. " | terminal: " .. term .. " | remote: " .. remote .. " | internal: " .. internal
   )
 end
 
@@ -398,6 +403,22 @@ function M.search_images(query)
   end
 
   notify.error("viewim: failed to open image picker" .. (err and (": " .. err) or ""))
+end
+
+--- Clean the remote image cache based on configured size and age limits.
+function M.clean_cache()
+  ensure_config_initialized()
+  local remote = config.options.remote or {}
+  local download = require("viewim.download")
+  download.clean_cache(remote, function(removed, freed_bytes, err)
+    if err then
+      notify.error(err)
+      return
+    end
+    notify.info(
+      string.format("viewim: cache cleaned — %d file(s) removed, %.1f MB freed", removed, freed_bytes / 1048576)
+    )
+  end)
 end
 
 return M

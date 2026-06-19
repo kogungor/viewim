@@ -6,6 +6,8 @@ local HTML_SCAN_RADIUS = 20
 local NEAREST_SCAN_RADIUS = 8
 local CACHE_MAX_LINES = 5000
 local SOURCE_CACHE = {}
+local REF_INDEX = {} -- [bufnr] = { [normalized_id] = target }
+local REF_INDEX_WATCHING = {} -- [bufnr] = true (autocmd registered)
 
 local function col_in_range(col, s, e)
   return col >= s and col <= e
@@ -41,24 +43,30 @@ local function normalize_markdown_target(raw)
     return nil
   end
 
-  if value:sub(1, 1) == "<" and value:sub(-1) == ">" then
+  -- Track whether angle brackets were present — they explicitly allow spaces in paths
+  local angle_wrapped = value:sub(1, 1) == "<" and value:sub(-1) == ">"
+  if angle_wrapped then
     value = value:sub(2, -2)
   end
 
-  if (value:sub(1, 1) == '"' and value:sub(-1) == '"')
-    or (value:sub(1, 1) == "'" and value:sub(-1) == "'") then
+  if (value:sub(1, 1) == '"' and value:sub(-1) == '"') or (value:sub(1, 1) == "'" and value:sub(-1) == "'") then
     value = value:sub(2, -2)
   end
 
-  local first = value:match("^([^%s]+)")
-  local target = first or value
+  -- Angle-bracket syntax allows spaces; skip whitespace split only in that case
+  local target
+  if angle_wrapped then
+    target = value
+  else
+    local first = value:match("^([^%s]+)")
+    target = first or value
+  end
 
   if target:sub(1, 1) == "<" and target:sub(-1) == ">" then
     target = target:sub(2, -2)
   end
 
-  if (target:sub(1, 1) == '"' and target:sub(-1) == '"')
-    or (target:sub(1, 1) == "'" and target:sub(-1) == "'") then
+  if (target:sub(1, 1) == '"' and target:sub(-1) == '"') or (target:sub(1, 1) == "'" and target:sub(-1) == "'") then
     target = target:sub(2, -2)
   end
 
@@ -281,21 +289,51 @@ local function first_markdown_reference_id_in_line(line)
   return normalize_reference_id(id)
 end
 
+local function build_ref_index(bufnr)
+  local index = {}
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  for _, line in ipairs(lines) do
+    local ref_id, rhs = line:match("^%s*%[([^%]]+)%]%s*:%s*(.+)%s*$")
+    if ref_id and rhs then
+      local norm = normalize_reference_id(ref_id)
+      if norm and not index[norm] then
+        index[norm] = normalize_markdown_target(rhs)
+      end
+    end
+  end
+  return index
+end
+
+local function get_ref_index(bufnr)
+  if not REF_INDEX[bufnr] then
+    REF_INDEX[bufnr] = build_ref_index(bufnr)
+
+    if not REF_INDEX_WATCHING[bufnr] then
+      REF_INDEX_WATCHING[bufnr] = true
+      vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufWritePost" }, {
+        buffer = bufnr,
+        callback = function()
+          REF_INDEX[bufnr] = nil
+        end,
+      })
+      vim.api.nvim_create_autocmd("BufDelete", {
+        buffer = bufnr,
+        callback = function()
+          REF_INDEX[bufnr] = nil
+          REF_INDEX_WATCHING[bufnr] = nil
+        end,
+      })
+    end
+  end
+  return REF_INDEX[bufnr]
+end
+
 local function resolve_markdown_reference(id, bufnr)
   local wanted = normalize_reference_id(id)
   if not wanted then
     return nil
   end
-
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  for _, line in ipairs(lines) do
-    local ref_id, rhs = line:match("^%s*%[([^%]]+)%]%s*:%s*(.+)%s*$")
-    if ref_id and rhs and normalize_reference_id(ref_id) == wanted then
-      return normalize_markdown_target(rhs)
-    end
-  end
-
-  return nil
+  return get_ref_index(bufnr)[wanted]
 end
 
 local function html_img_src_under_cursor(line, col)
@@ -351,10 +389,13 @@ local function cursor_in_tag(cursor_row, cursor_col, tag)
   return true
 end
 
-local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col)
+-- Collect all <img ...> tags (potentially spanning multiple lines) within a
+-- row window around the cursor. Returns a list of tag descriptors with
+-- text, start_row, start_col, end_row, end_col fields.
+local function collect_img_tags_in_window(bufnr, cursor_row, radius)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local from_row = math.max(1, cursor_row - HTML_SCAN_RADIUS)
-  local to_row = math.min(line_count, cursor_row + HTML_SCAN_RADIUS)
+  local from_row = math.max(1, cursor_row - radius)
+  local to_row = math.min(line_count, cursor_row + radius)
   local lines = vim.api.nvim_buf_get_lines(bufnr, from_row - 1, to_row, false)
 
   local tags = {}
@@ -362,25 +403,14 @@ local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col
 
   for i, line in ipairs(lines) do
     local row = from_row + i - 1
-
     if not current then
       local s = find_img_tag_start(line)
       if s then
         local e = line:find(">", s, true)
         if e then
-          table.insert(tags, {
-            text = line:sub(s, e),
-            start_row = row,
-            start_col = s,
-            end_row = row,
-            end_col = e,
-          })
+          table.insert(tags, { text = line:sub(s, e), start_row = row, start_col = s, end_row = row, end_col = e })
         else
-          current = {
-            text = line:sub(s),
-            start_row = row,
-            start_col = s,
-          }
+          current = { text = line:sub(s), start_row = row, start_col = s }
         end
       end
     else
@@ -397,73 +427,36 @@ local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col
     end
   end
 
+  return tags
+end
+
+local function extract_src_from_tag(tag)
+  local src = tag.text:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
+    or tag.text:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
+    or tag.text:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
+  return src and vim.trim(src) or nil
+end
+
+local function html_img_src_under_cursor_multiline(bufnr, cursor_row, cursor_col)
+  local tags = collect_img_tags_in_window(bufnr, cursor_row, HTML_SCAN_RADIUS)
   for _, tag in ipairs(tags) do
     if cursor_in_tag(cursor_row, cursor_col, tag) then
-      local src = tag.text:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
-        or tag.text:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
-        or tag.text:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
-      return src and vim.trim(src) or nil
+      return extract_src_from_tag(tag)
     end
   end
-
   return nil
 end
 
 local function html_img_src_near_cursor_multiline(bufnr, cursor_row, cursor_col)
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local from_row = math.max(1, cursor_row - HTML_SCAN_RADIUS)
-  local to_row = math.min(line_count, cursor_row + HTML_SCAN_RADIUS)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, from_row - 1, to_row, false)
-
-  local tags = {}
-  local current = nil
-
-  for i, line in ipairs(lines) do
-    local row = from_row + i - 1
-
-    if not current then
-      local s = find_img_tag_start(line)
-      if s then
-        local e = line:find(">", s, true)
-        if e then
-          table.insert(tags, {
-            text = line:sub(s, e),
-            start_row = row,
-            start_col = s,
-            end_row = row,
-            end_col = e,
-          })
-        else
-          current = {
-            text = line:sub(s),
-            start_row = row,
-            start_col = s,
-          }
-        end
-      end
-    else
-      local e = line:find(">", 1, true)
-      if e then
-        current.text = current.text .. "\n" .. line:sub(1, e)
-        current.end_row = row
-        current.end_col = e
-        table.insert(tags, current)
-        current = nil
-      else
-        current.text = current.text .. "\n" .. line
-      end
-    end
-  end
+  local tags = collect_img_tags_in_window(bufnr, cursor_row, HTML_SCAN_RADIUS)
 
   local best_src = nil
   local best_dist = nil
 
   for _, tag in ipairs(tags) do
-    local src = tag.text:match('[Ss][Rr][Cc]%s*=%s*"([^"]+)"')
-      or tag.text:match("[Ss][Rr][Cc]%s*=%s*'([^']+)'")
-      or tag.text:match("[Ss][Rr][Cc]%s*=%s*([^%s>]+)")
+    local src = extract_src_from_tag(tag)
 
-    if src and vim.trim(src) ~= "" then
+    if src and src ~= "" then
       local row_dist = 0
       if cursor_row < tag.start_row then
         row_dist = tag.start_row - cursor_row
@@ -491,9 +484,20 @@ end
 
 local function nearest_source_around_cursor(bufnr, row)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  -- Read only the window around the cursor instead of the entire buffer
+  local start_0 = math.max(0, row - NEAREST_SCAN_RADIUS - 1)
+  local end_0 = math.min(line_count, row + NEAREST_SCAN_RADIUS)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start_0, end_0, false)
+
+  local function get_line(abs_row)
+    local idx = abs_row - start_0
+    return lines[idx]
+  end
 
   local function source_from_line(line)
+    if not line then
+      return nil
+    end
     local src = first_markdown_image_in_line(line)
     if src then
       return src
@@ -510,18 +514,15 @@ local function nearest_source_around_cursor(bufnr, row)
     return first_html_img_src_in_line(line)
   end
 
-  local current_line = lines[row]
-  if current_line then
-    local src = source_from_line(current_line)
-    if src then
-      return src, 0
-    end
+  local src = source_from_line(get_line(row))
+  if src then
+    return src, 0
   end
 
   for offset = 1, NEAREST_SCAN_RADIUS do
     local up = row - offset
     if up >= 1 and up <= line_count then
-      local src = source_from_line(lines[up])
+      src = source_from_line(get_line(up))
       if src then
         return src, offset
       end
@@ -529,7 +530,7 @@ local function nearest_source_around_cursor(bufnr, row)
 
     local down = row + offset
     if down >= 1 and down <= line_count then
-      local src = source_from_line(lines[down])
+      src = source_from_line(get_line(down))
       if src then
         return src, offset
       end

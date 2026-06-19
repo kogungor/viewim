@@ -1,4 +1,5 @@
 local util = require("viewim.runners.util")
+local notify = require("viewim.notify")
 
 local M = {}
 
@@ -29,14 +30,14 @@ function M.run(path, opts)
     vim.list_extend(cmd, { "--percent", tostring(opts.split_percent) })
   end
 
-  vim.list_extend(cmd, { "--", "wezterm", "imgcat", path })
+  vim.list_extend(cmd, { "--", "wezterm", "imgcat", "--", path })
 
   local job_id = vim.fn.jobstart(cmd, {
     on_stderr = function(_, data)
       local msg = util.join_nonempty(data)
       if msg ~= "" then
         vim.schedule(function()
-          vim.notify("viewim: wezterm error: " .. msg, vim.log.levels.ERROR)
+          notify.error("viewim: wezterm error: " .. msg)
         end)
       end
     end,

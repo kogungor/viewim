@@ -1,14 +1,21 @@
 local M = {}
 
 --- Detect the current terminal emulator.
---- @return string|nil terminal name ("kitty", "wezterm", "ghostty") or nil if unsupported
+--- @return string|nil terminal name ("kitty", "wezterm", "ghostty", "iterm2") or nil
 function M.get_terminal()
+  local ok, config = pcall(require, "viewim.config")
+  if ok and config.options and config.options.force_terminal then
+    return config.options.force_terminal
+  end
+
   if os.getenv("KITTY_PID") then
     return "kitty"
   elseif os.getenv("WEZTERM_PANE") then
     return "wezterm"
   elseif (os.getenv("TERM_PROGRAM") or ""):lower() == "ghostty" then
     return "ghostty"
+  elseif (os.getenv("TERM_PROGRAM") or "") == "iTerm.app" then
+    return "iterm2"
   end
   return nil
 end

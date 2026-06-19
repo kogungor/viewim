@@ -54,3 +54,10 @@ end, {
   nargs = "*",
   desc = "Search project images and preview selected",
 })
+
+vim.api.nvim_create_user_command("ViewimCleanCache", function()
+  require("viewim").clean_cache()
+end, {
+  nargs = 0,
+  desc = "Clean viewim remote image cache (respects max_age_days and max_cache_bytes)",
+})

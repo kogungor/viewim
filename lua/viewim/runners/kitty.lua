@@ -34,6 +34,7 @@ local function detached_launch(path, listen_on, launch_type)
     "kitty",
     "+kitten",
     "icat",
+    "--",
     path,
   })
 
@@ -56,7 +57,7 @@ local function detached_launch(path, listen_on, launch_type)
       end
 
       vim.schedule(function()
-        vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
+        notify.error("viewim: kitty error: " .. msg)
       end)
     end,
   })
@@ -88,9 +89,7 @@ function M.run(path, opts)
   elseif listen_on and listen_on ~= "" then
     if not missing_socket_warned[listen_on] then
       missing_socket_warned[listen_on] = true
-      notify.warn(
-        "viewim: kitty socket not found, retrying without --to: " .. listen_on
-      )
+      notify.warn("viewim: kitty socket not found, retrying without --to: " .. listen_on)
     end
   end
 
@@ -103,6 +102,7 @@ function M.run(path, opts)
     "kitty",
     "+kitten",
     "icat",
+    "--",
     path,
   })
 
@@ -117,8 +117,7 @@ function M.run(path, opts)
     on_exit = function(_, code)
       local stderr_msg = util.join_nonempty(stderr_buf)
       local stderr_lower = stderr_msg:lower()
-      local tty_issue = stderr_lower:find("/dev/tty", 1, true)
-        or stderr_lower:find("controlling terminal", 1, true)
+      local tty_issue = stderr_lower:find("/dev/tty", 1, true) or stderr_lower:find("controlling terminal", 1, true)
       local socket_missing = stderr_lower:find("failed to connect", 1, true)
         and stderr_lower:find("no such file or directory", 1, true)
 
@@ -132,7 +131,7 @@ function M.run(path, opts)
         vim.schedule(function()
           local ok, err = detached_launch(path, retry_listen, launch_type)
           if not ok and err then
-            vim.notify(err, vim.log.levels.ERROR)
+            notify.error(err)
           end
         end)
         return
@@ -142,7 +141,7 @@ function M.run(path, opts)
         vim.schedule(function()
           local ok, err = detached_launch(path, listen_on, launch_type)
           if not ok and err then
-            vim.notify(err, vim.log.levels.ERROR)
+            notify.error(err)
           end
         end)
         return
@@ -154,7 +153,7 @@ function M.run(path, opts)
 
       local msg = stderr_msg ~= "" and stderr_msg or ("kitty launch exited with code " .. code)
       vim.schedule(function()
-        vim.notify("viewim: kitty error: " .. msg, vim.log.levels.ERROR)
+        notify.error("viewim: kitty error: " .. msg)
       end)
     end,
   })

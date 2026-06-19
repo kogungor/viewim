@@ -1,4 +1,4 @@
-*viewim.txt*  Preview images from Neovim in kitty, wezterm, and Ghostty
+*viewim.txt*  Preview images from Neovim in kitty, wezterm, ghostty, and iTerm2
 
 Author:   kogungor
 License:  MIT
@@ -35,10 +35,13 @@ Supported terminals:
 - kitty (via kitten icat)
 - wezterm (via wezterm imgcat)
 - Ghostty (via OS native external opener or tmux pane mode)
+- iTerm2 (via imgcat from iTerm2 shell integration)
 
-Supported image formats: bmp, jpg, jpeg, png, gif, webp, avif.
+Supported image formats: bmp, jpg, jpeg, png, gif, webp, avif, svg (with
+rsvg-convert or ImageMagick installed).
 Note: AVIF recognition is built in, but actual rendering depends on terminal
 and image codec support on your system.
+SVG files are converted to a temporary PNG before preview.
 
 ==============================================================================
 2. REQUIREMENTS                                          *viewim-requirements*
@@ -48,17 +51,30 @@ and image codec support on your system.
   - kitty (https://sw.kovidgoyal.net/kitty/)
   - wezterm (https://wezfurlong.org/wezterm/)
   - Ghostty (https://ghostty.org/) (uses OS native external opener)
+  - iTerm2 (macOS) with imgcat from iTerm2 shell integration
 - At least one file explorer (optional):
   - nvim-tree.lua
   - oil.nvim
   - neo-tree.nvim
 - curl (optional; required only for remote URL previews)
 - tmux (optional; required only for `ghostty.mode = "tmux"`)
+- rsvg-convert or magick/ImageMagick (optional; required only for SVG preview)
+- telescope.nvim, snacks.nvim, or fzf-lua (optional; enhanced search picker)
 
 ==============================================================================
 3. INSTALLATION                                          *viewim-installation*
 
 Using lazy.nvim: >lua
+  {
+    "kogungor/viewim",
+    opts = {
+      keymap = "<leader>p",
+      cursor_keymap = "<leader>wi",
+    },
+  }
+<
+
+Using lazy.nvim (explicit config): >lua
   {
     "kogungor/viewim",
     config = function()
@@ -101,6 +117,13 @@ Kitty users (required): ~
 <
   Restart kitty after changing kitty.conf.
 
+iTerm2 users: ~
+  Install imgcat via iTerm2 shell integration: >sh
+  curl -L https://iterm2.com/shell_integration/install_shell_integration.bash | bash
+<
+  Restart your shell. viewim detects iTerm2 automatically via TERM_PROGRAM.
+  Run `:checkhealth viewim` to confirm imgcat is found.
+
 ==============================================================================
 4. CONFIGURATION                                        *viewim-configuration*
 
@@ -109,6 +132,7 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
   require("viewim").setup({
     enabled = true,
     quiet_warnings = false,
+    force_terminal = nil,
     keymap = "<leader>p",
     cursor_keymap = "<leader>wi",
     preview_placement = {
@@ -150,12 +174,21 @@ Call `setup()` with an optional table. All values shown are defaults: >lua
       tmux_split_percent = nil,
       tmux_command = "kitten icat --hold",
     },
+    iterm2 = {
+      enabled = true,
+    },
+    svg = {
+      enabled = true,
+      converter = "auto",
+    },
     remote = {
       enabled = true,
       timeout_ms = 10000,
       max_bytes = 10485760,
       cache_dir = vim.fn.stdpath("cache") .. "/viewim/remote",
       require_https = false,
+      max_age_days = 0,
+      max_cache_bytes = 0,
     },
     search = {
       enabled = true,
@@ -178,6 +211,14 @@ Options: ~
     Type: boolean
     Default: `true`
     Enables or disables viewim previews globally.
+
+  `force_terminal`                             *viewim-config-force-terminal*
+    Type: string|nil
+    Default: `nil`
+    Override terminal auto-detection. Accepted values: `"kitty"`, `"wezterm"`,
+    `"ghostty"`, `"iterm2"`. Set this when env vars are stripped (SSH, tmux,
+    sudo) or when multiple terminals are nested and detection picks the wrong
+    one. Invalid values are ignored with a warning.
 
   `quiet_warnings`                           *viewim-config-quiet-warnings*
     Type: boolean
@@ -292,6 +333,11 @@ Options: ~
     Ghostty preview mode. Supported values: `external`, `tmux`.
     Unsupported values fall back to `"external"` with a warning.
 
+    Note: in `external` mode, both the normal preview and `preview_large`
+    (`<Space>`) open the image in the system viewer (macOS `open`, Linux
+    `xdg-open`). There is no split-pane behavior. Use `tmux` mode if you
+    want a side-by-side pane preview.
+
   `ghostty.opener`                              *viewim-config-ghostty-opener*
     Type: string
     Default: `"auto"`
@@ -313,6 +359,29 @@ Options: ~
     Type: string
     Default: `"kitten icat --hold"`
     Command executed in the new tmux split pane when tmux mode is enabled.
+
+    Security note: this value is passed directly to `tmux new-window -e` and
+    then to the shell. Do not set it to any user-controlled or untrusted input.
+
+  `iterm2.enabled`                               *viewim-config-iterm2-enabled*
+    Type: boolean
+    Default: `true`
+    Enables iTerm2 preview when the iTerm2 terminal is detected. Set to `false`
+    to disable the iTerm2 backend even when `TERM_PROGRAM=iTerm.app` is set.
+
+  `svg.enabled`                                     *viewim-config-svg-enabled*
+    Type: boolean
+    Default: `true`
+    Enables SVG preview via an external converter. When disabled, `.svg` files
+    are rejected with an error notification.
+
+  `svg.converter`                                 *viewim-config-svg-converter*
+    Type: string
+    Default: `"auto"`
+    SVG converter to use. Accepted values:
+    - `"auto"` — tries `rsvg-convert` first, then `magick`
+    - `"rsvg-convert"` — librsvg CLI (faster, smaller dependency)
+    - `"magick"` — ImageMagick v7
 
   `remote.enabled`                              *viewim-config-remote-enabled*
     Type: boolean
@@ -339,6 +408,20 @@ Options: ~
     Default: `false`
     If true, rejects `http://` URLs and allows only `https://`.
 
+  `remote.max_age_days`                       *viewim-config-remote-max-age*
+    Type: number
+    Default: `0` (disabled)
+    Maximum age in days for cached remote images. Files older than this are
+    removed when `:ViewimCleanCache` is called. Set to `0` to disable age-based
+    pruning.
+
+  `remote.max_cache_bytes`                   *viewim-config-remote-max-bytes*
+    Type: number
+    Default: `0` (disabled)
+    Maximum total cache directory size in bytes. When the cache exceeds this
+    limit, the oldest files are removed when `:ViewimCleanCache` is called.
+    Set to `0` to disable size-based pruning.
+
   `search.enabled`                               *viewim-config-search-enabled*
     Type: boolean
     Default: `true`
@@ -347,7 +430,9 @@ Options: ~
   `search.preferred_picker`                      *viewim-config-search-picker*
     Type: string
     Default: `"auto"`
-    Picker preference for search UI (`auto`, `telescope`, `snacks`, `builtin`).
+    Picker preference for search UI.
+    Accepted values: `auto`, `telescope`, `snacks`, `fzflua`, `builtin`.
+    Auto fallback order: telescope → snacks → fzf-lua → builtin.
     Falls back automatically to next available backend.
 
   `search.max_results`                           *viewim-config-search-max-results*
@@ -376,6 +461,9 @@ Options: ~
     Action used when `<Space>` is pressed in supported pickers.
     Supported values: `large_preview`, `preview`.
 
+    Note: for Ghostty in `external` mode, `large_preview` and `preview` both
+    open the system viewer — there is no larger split-pane variant.
+
   `experimental.internal_render`               *viewim-config-experimental-internal*
     Type: boolean
     Default: `false`
@@ -399,6 +487,7 @@ Options: ~
 :ViewImageAtCursor      Preview markdown/html image source under cursor.
                         Supported patterns:
                         - `![alt](path-or-url)`
+                        - `![](<path with spaces>)`
                         - `![alt][id]` with `[id]: path-or-url`
                         - `<img src="path-or-url" ...>` (single-line or multi-line)
                         If cursor is not directly on image syntax, nearest image
@@ -427,10 +516,18 @@ Options: ~
                         Optional `[query]` pre-filters results.
                         Selection preview and `<Space>` action depend on picker backend.
                         Reports active picker backend after opening.
-                        Current backend behavior:
+                        Backend behavior:
                         - telescope: selection-change preview + `<Space>` action
-                        - snacks: picker + confirm preview
-                        - builtin: confirm preview
+                        - snacks: on_change preview + `<Space>` (picker.pick API)
+                        - fzf-lua: debounced preview + `<Space>` action
+                        - builtin: confirm preview only
+
+                                                      *:ViewimCleanCache*
+:ViewimCleanCache       Clean the remote image cache directory.
+                        Removes files older than `remote.max_age_days` days,
+                        then trims total size to `remote.max_cache_bytes`.
+                        Reports number of files removed and MB freed.
+                        Set either option to `0` to skip that pruning pass.
 
 ==============================================================================
 6. KEYMAPS                                                  *viewim-keymaps*
@@ -481,22 +578,23 @@ buffer ~
 viewim is organized by responsibility:
 
 - `plugin/viewim.lua`: registers user commands (`:ViewImage`,
-  `:ViewImageAtCursor`,
-  `:ViewImageEnable`, `:ViewImageDisable`, `:ViewImageToggle`,
-  `:ViewImageStatus`, `:SearchImage`)
+  `:ViewImageAtCursor`, `:ViewImageEnable`, `:ViewImageDisable`,
+  `:ViewImageToggle`, `:ViewImageStatus`, `:SearchImage`, `:ViewimCleanCache`)
 - `lua/viewim/search.lua`: project image discovery and query filtering backend
-- `lua/viewim/pickers/*.lua`: picker adapters (`telescope`, `snacks`, `builtin`)
+- `lua/viewim/pickers/*.lua`: picker adapters
+  (`telescope`, `snacks`, `fzflua`, `builtin`)
 - `lua/viewim/cursor.lua`: extracts markdown/html image source under cursor
 - `lua/viewim/init.lua`: public API, runtime controls, and keymap wiring
 - `lua/viewim/config.lua`: defaults + normalized/validated config
 - `lua/viewim/path.lua`: path resolution and control-character checks
 - `lua/viewim/url.lua`: URL helpers (`scheme`, extension hints)
-- `lua/viewim/download.lua`: remote downloader with timeout/size limits
+- `lua/viewim/download.lua`: remote downloader with timeout/size limits + cache cleanup
 - `lua/viewim/renderers/*.lua`: experimental internal renderers
 - `lua/viewim/preview.lua`: orchestrator
-  (`enabled -> local/remote handling -> validate -> detect -> dispatch`)
-- `lua/viewim/detect.lua`: terminal/platform detection helpers
+  (`enabled -> svg conversion -> local/remote handling -> validate -> detect -> dispatch`)
+- `lua/viewim/detect.lua`: terminal/platform detection; respects `force_terminal`
 - `lua/viewim/runners/*.lua`: terminal-specific launch logic
+  (`kitty`, `wezterm`, `ghostty`, `iterm2`)
 - `lua/viewim/integrations/*.lua`: explorer/buffer path adapters + resolver hook
 - `lua/viewim/health.lua`: `:checkhealth viewim`
 
@@ -505,9 +603,10 @@ Runtime flow: ~
   2. Integration resolves a candidate file path.
   3. Optional integration `resolve_path` hook can rewrite that path.
   4. `preview.lua` checks global enabled state.
-  5. Local path is validated, or remote URL is downloaded then validated.
-  6. Terminal is detected (kitty/wezterm/ghostty).
-  7. Matching runner executes the preview command.
+  5. SVG files are converted to a temp PNG via external converter.
+  6. Local path is validated, or remote URL is downloaded then validated.
+  7. Terminal is detected (respects `force_terminal` if set).
+  8. Matching runner executes the preview command.
 
 ==============================================================================
 9. HEALTH CHECK                                              *viewim-health*
@@ -516,9 +615,11 @@ Run `:checkhealth viewim` to verify your setup.
 
 Checks performed:
 - Neovim version >= 0.9
-- Terminal emulator detected (kitty / wezterm / ghostty)
-- CLI tools available (`kitten` for kitty, `wezterm` for wezterm)
+- Terminal emulator detected (kitty / wezterm / ghostty / iterm2)
+- CLI tools available (`kitten` for kitty, `wezterm` for wezterm,
+  `imgcat` for iTerm2)
 - `curl` available in `$PATH` (for remote URL previews)
+- SVG converter available (`rsvg-convert` or `magick`) if svg.enabled=true
 - search backend availability and active picker resolution
 - Kitty remote socket available (for kitty)
 - Ghostty dependencies by mode (`opener` for external mode, `tmux` for tmux mode)
@@ -526,7 +627,7 @@ Checks performed:
 - `.avif` enabled status and compatibility warning
 - experimental internal-render capability state
 
-============================================================================== 
+==============================================================================
 10. TROUBLESHOOTING                             *viewim-troubleshooting*
 
 No preview appears in kitty: ~
@@ -558,6 +659,34 @@ No preview appears in Ghostty: ~
      `tmux` command is in `$PATH`.
   4. You can set `ghostty.tmux_command` explicitly in setup.
 
+No preview in iTerm2: ~
+  1. Run `:checkhealth viewim`.
+  2. Ensure `imgcat` is installed via iTerm2 shell integration:
+       curl -L https://iterm2.com/shell_integration/install_shell_integration.bash | bash
+  3. Restart your shell. Verify `~/.iterm2/imgcat` exists.
+  4. If running outside iTerm2, set `force_terminal = "iterm2"` in setup.
+
+SVG preview fails: ~
+  1. Install `librsvg` (provides `rsvg-convert`):
+       macOS: brew install librsvg
+       Linux: apt-get install librsvg2-bin / dnf install librsvg2-tools
+  2. Or install ImageMagick v7:
+       macOS: brew install imagemagick
+       Linux: apt-get install imagemagick
+  3. Set `svg.converter = "rsvg-convert"` or `"magick"` to force one explicitly.
+  4. Run `:checkhealth viewim` to confirm the converter is found.
+
+Terminal not detected (SSH, sudo, nested tmux): ~
+  Set `force_terminal` in setup to explicitly name your backend: >lua
+    require("viewim").setup({ force_terminal = "kitty" })
+<
+
+Cache cleanup does nothing: ~
+  Ensure `remote.max_age_days` or `remote.max_cache_bytes` is greater than 0.
+  Both default to 0 (disabled). Example: >lua
+    remote = { max_age_days = 30, max_cache_bytes = 524288000 }
+<
+
 Relative path not found: ~
   Use an absolute path in `:ViewImage /full/path/to/file.png`.
 
@@ -574,5 +703,31 @@ Relative path not found: ~
   If failure is due to missing controlling terminal (`/dev/tty`), internal mode
   is auto-disabled for the current Neovim session.
 
-============================================================================== 
+No preview in iTerm2: ~
+  1. Run `:checkhealth viewim`.
+  2. Ensure `imgcat` is installed via iTerm2 shell integration:
+       curl -L https://iterm2.com/shell_integration/install_shell_integration.bash | bash
+  3. Restart your shell. Verify `~/.iterm2/imgcat` exists.
+  4. If running outside iTerm2, set `force_terminal = "iterm2"` in setup.
+
+SVG preview fails: ~
+  1. Install `librsvg` (provides `rsvg-convert`):
+       macOS: brew install librsvg
+       Linux: apt-get install librsvg2-bin / dnf install librsvg2-tools
+  2. Or install ImageMagick v7:
+       macOS: brew install imagemagick
+       Linux: apt-get install imagemagick
+  3. Set `svg.converter = "rsvg-convert"` or `"magick"` to force one explicitly.
+  4. Run `:checkhealth viewim` to confirm the converter is found.
+
+Terminal not detected (SSH, sudo, nested tmux): ~
+  Set `force_terminal` in setup to explicitly name your backend:
+    require("viewim").setup({ force_terminal = "kitty" })
+
+Cache cleanup does nothing: ~
+  Ensure `remote.max_age_days` or `remote.max_cache_bytes` is greater than 0.
+  Both default to 0 (disabled). Example:
+    remote = { max_age_days = 30, max_cache_bytes = 524288000 }
+
+==============================================================================
  vim:tw=78:ts=8:ft=help:norl:

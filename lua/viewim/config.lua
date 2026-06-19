@@ -1,3 +1,70 @@
+---@class ViewimKittyConfig
+---@field listen_on string|nil
+---@field launch_type "os-window"|"tab"|"window"
+
+---@class ViewimWeztermConfig
+---@field split_direction "left"|"right"|"top"|"bottom"
+---@field split_percent number|nil
+
+---@class ViewimGhosttyConfig
+---@field mode "external"|"tmux"
+---@field opener string
+---@field tmux_split_direction "left"|"right"|"top"|"bottom"
+---@field tmux_split_percent number|nil
+---@field tmux_command string
+
+---@class ViewimRemoteConfig
+---@field enabled boolean
+---@field timeout_ms number
+---@field max_bytes number
+---@field cache_dir string
+---@field require_https boolean
+
+---@class ViewimSearchConfig
+---@field enabled boolean
+---@field preferred_picker "auto"|"telescope"|"snacks"|"builtin"
+---@field max_results number
+---@field include_hidden boolean
+---@field selection_preview boolean
+---@field selection_preview_debounce_ms number
+---@field space_action "large_preview"|"preview"
+
+---@class ViewimIntegrationEntry
+---@field enabled boolean
+---@field resolve_path (fun(bufnr:integer):string|nil)|nil
+
+---@class ViewimIntegrationsConfig
+---@field nvim_tree ViewimIntegrationEntry
+---@field oil ViewimIntegrationEntry
+---@field neo_tree ViewimIntegrationEntry
+
+---@class ViewimExperimentalConfig
+---@field internal_render boolean
+
+---@class ViewimConfig
+---@field enabled boolean
+---@field quiet_warnings boolean
+---@field keymap string
+---@field cursor_keymap string
+---@field force_terminal "kitty"|"wezterm"|"ghostty"|"iterm2"|nil
+---@field supported_extensions string[]
+---@field kitty ViewimKittyConfig
+---@field wezterm ViewimWeztermConfig
+---@field ghostty ViewimGhosttyConfig
+---@field iterm2 ViewimIterm2Config
+---@field remote ViewimRemoteConfig
+---@field search ViewimSearchConfig
+---@field integrations ViewimIntegrationsConfig
+---@field experimental ViewimExperimentalConfig
+---@field svg ViewimSvgConfig
+
+---@class ViewimIterm2Config
+---@field enabled boolean
+
+---@class ViewimSvgConfig
+---@field enabled boolean
+---@field converter "auto"|"rsvg-convert"|"magick"
+
 local M = {}
 
 local VALID_KITTY_LAUNCH_TYPES = {
@@ -22,12 +89,14 @@ local VALID_SEARCH_PICKERS = {
   auto = true,
   telescope = true,
   snacks = true,
+  fzflua = true,
   builtin = true,
 }
 
 M.defaults = {
   enabled = true,
   quiet_warnings = false,
+  force_terminal = nil,
   keymap = "<leader>p",
   cursor_keymap = "<leader>wi",
   preview_placement = {
@@ -87,12 +156,21 @@ M.defaults = {
     tmux_split_percent = nil,
     tmux_command = "kitten icat --hold",
   },
+  iterm2 = {
+    enabled = true,
+  },
+  svg = {
+    enabled = true,
+    converter = "auto",
+  },
   remote = {
     enabled = true,
     timeout_ms = 10000,
     max_bytes = 10485760,
     cache_dir = vim.fs.normalize(vim.fn.stdpath("cache") .. "/viewim/remote"),
     require_https = false,
+    max_age_days = 0,
+    max_cache_bytes = 0,
   },
   search = {
     enabled = true,
@@ -121,6 +199,7 @@ local function normalize_extensions(values)
   end
 
   local normalized = {}
+  local seen = {}
   for _, ext in ipairs(values) do
     if type(ext) == "string" then
       local candidate = ext:lower()
@@ -129,7 +208,10 @@ local function normalize_extensions(values)
       end
 
       if candidate:match("^%.[a-z0-9]+$") then
-        table.insert(normalized, candidate)
+        if not seen[candidate] then
+          seen[candidate] = true
+          table.insert(normalized, candidate)
+        end
       else
         warn("viewim: ignoring invalid extension: " .. ext)
       end
@@ -400,6 +482,41 @@ local function normalize_experimental(opts)
   return opts
 end
 
+local VALID_TERMINALS = { kitty = true, wezterm = true, ghostty = true, iterm2 = true }
+
+local function normalize_force_terminal(value)
+  if value == nil then
+    return nil
+  end
+  if type(value) == "string" and VALID_TERMINALS[value] then
+    return value
+  end
+  warn("viewim: invalid force_terminal value, ignoring")
+  return nil
+end
+
+local function normalize_iterm2(opts)
+  opts = opts or {}
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = true
+  end
+  return opts
+end
+
+local VALID_SVG_CONVERTERS = { auto = true, ["rsvg-convert"] = true, magick = true }
+
+local function normalize_svg(opts)
+  opts = opts or {}
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = true
+  end
+  if type(opts.converter) ~= "string" or not VALID_SVG_CONVERTERS[opts.converter] then
+    opts.converter = "auto"
+  end
+  return opts
+end
+
+---@param opts ViewimConfig|nil
 function M.setup(opts)
   opts = opts or {}
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), opts)
@@ -418,6 +535,9 @@ function M.setup(opts)
   M.options.kitty = normalize_kitty(M.options.kitty)
   M.options.wezterm = normalize_wezterm(M.options.wezterm)
   M.options.ghostty = normalize_ghostty(M.options.ghostty)
+  M.options.iterm2 = normalize_iterm2(M.options.iterm2)
+  M.options.svg = normalize_svg(M.options.svg)
+  M.options.force_terminal = normalize_force_terminal(M.options.force_terminal)
   M.options.remote = normalize_remote(M.options.remote)
   M.options.search = normalize_search(M.options.search)
 

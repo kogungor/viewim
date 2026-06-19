@@ -40,9 +40,8 @@ end
 
 local function make_target_path(cache_dir, source_url)
   local ext = url.extension_from_url(source_url)
-  local hash = vim.fn.sha256(source_url):sub(1, 12)
-  local timestamp = tostring(os.time())
-  return cache_dir .. "/" .. timestamp .. "-" .. hash .. (ext or ".img")
+  local hash = vim.fn.sha256(source_url)
+  return cache_dir .. "/" .. hash .. (ext or ".img")
 end
 
 local function maybe_apply_content_type_extension(target_path, content_type)
@@ -129,9 +128,12 @@ function M.fetch(source_url, opts, callback)
     on_exit = function(_, code)
       if code ~= 0 then
         vim.fn.delete(target_path)
-        local stderr_msg = table.concat(vim.tbl_filter(function(v)
-          return v and v ~= ""
-        end, stderr_lines), "\n")
+        local stderr_msg = table.concat(
+          vim.tbl_filter(function(v)
+            return v and v ~= ""
+          end, stderr_lines),
+          "\n"
+        )
         local msg = stderr_msg ~= "" and stderr_msg or ("curl exited with code " .. code)
         callback(nil, nil, "viewim: remote download failed: " .. msg)
         return
@@ -146,6 +148,80 @@ function M.fetch(source_url, opts, callback)
   if job_id <= 0 then
     callback(nil, nil, "viewim: failed to start curl download")
   end
+end
+
+--- Clean the remote image cache by removing files older than max_age_days
+--- and trimming total size to max_cache_bytes (oldest-first).
+--- @param opts table remote config options
+--- @param callback fun(removed:integer, freed_bytes:integer, err:string|nil)
+function M.clean_cache(opts, callback)
+  opts = opts or {}
+  local cache_dir = opts.cache_dir
+  if not cache_dir or cache_dir == "" or vim.fn.isdirectory(cache_dir) ~= 1 then
+    callback(0, 0, nil)
+    return
+  end
+
+  local max_age_days = opts.max_age_days or 0
+  local max_bytes = opts.max_cache_bytes or 0
+  local now = os.time()
+  local files = {}
+
+  local handle = vim.uv.fs_scandir(cache_dir)
+  if not handle then
+    callback(0, 0, "viewim: cannot read cache dir: " .. cache_dir)
+    return
+  end
+
+  while true do
+    local name, ftype = vim.uv.fs_scandir_next(handle)
+    if not name then
+      break
+    end
+    if ftype == "file" then
+      local full = cache_dir .. "/" .. name
+      local stat = vim.uv.fs_stat(full)
+      if stat then
+        table.insert(files, { path = full, mtime = stat.mtime.sec, size = stat.size })
+      end
+    end
+  end
+
+  table.sort(files, function(a, b)
+    return a.mtime < b.mtime
+  end)
+
+  local removed = 0
+  local freed = 0
+
+  for _, f in ipairs(files) do
+    local age_days = (now - f.mtime) / 86400
+    if max_age_days > 0 and age_days > max_age_days then
+      vim.fn.delete(f.path)
+      removed = removed + 1
+      freed = freed + f.size
+      f.deleted = true
+    end
+  end
+
+  if max_bytes > 0 then
+    local total = 0
+    for _, f in ipairs(files) do
+      if not f.deleted then
+        total = total + f.size
+      end
+    end
+    for _, f in ipairs(files) do
+      if not f.deleted and total > max_bytes then
+        vim.fn.delete(f.path)
+        total = total - f.size
+        removed = removed + 1
+        freed = freed + f.size
+      end
+    end
+  end
+
+  callback(removed, freed, nil)
 end
 
 return M

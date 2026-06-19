@@ -1,9 +1,7 @@
 local M = {}
 
 local function is_abs_path(path)
-  return path:sub(1, 1) == "/"
-    or path:match("^%a:[/\\]") ~= nil
-    or path:sub(1, 2) == "\\\\"
+  return path:sub(1, 1) == "/" or path:match("^%a:[/\\]") ~= nil or path:sub(1, 2) == "\\\\"
 end
 
 --- Resolve a path into an absolute local path.

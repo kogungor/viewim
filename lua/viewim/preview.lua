@@ -8,6 +8,7 @@ local renderers = require("viewim.renderers")
 local kitty_runner = require("viewim.runners.kitty")
 local wezterm_runner = require("viewim.runners.wezterm")
 local ghostty_runner = require("viewim.runners.ghostty")
+local iterm2_runner = require("viewim.runners.iterm2")
 
 local M = {}
 
@@ -41,7 +42,7 @@ local function run_or_notify(ok, err)
   if ok then
     return
   end
-  vim.notify(err or "viewim: preview command failed", vim.log.levels.ERROR)
+  notify.error(err or "viewim: preview command failed")
 end
 
 local function merged_options(mode_opts)
@@ -72,11 +73,7 @@ local function dispatch_preview(resolved, mode_opts)
   local kitty_opts, wezterm_opts, ghostty_opts = merged_options(mode_opts)
 
   if not mode_opts or not mode_opts.large then
-    local attempted, ok, err = renderers.try_render(
-      resolved,
-      term,
-      config.options and config.options.experimental
-    )
+    local attempted, ok, err = renderers.try_render(resolved, term, config.options and config.options.experimental)
     if attempted and ok then
       return
     end
@@ -90,13 +87,9 @@ local function dispatch_preview(resolved, mode_opts)
       if exp and exp.internal_render and tty_failure then
         exp.internal_render = false
         exp._auto_disabled_reason = err or "controlling terminal unavailable"
-        notify.warn(
-          "viewim: internal render unavailable (no controlling terminal), auto-disabled for this session"
-        )
+        notify.warn("viewim: internal render unavailable (no controlling terminal), auto-disabled for this session")
       else
-        notify.warn(
-          "viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or "")
-        )
+        notify.warn("viewim: internal render failed, falling back to launcher" .. (err and (": " .. err) or ""))
       end
     end
   end
@@ -107,11 +100,63 @@ local function dispatch_preview(resolved, mode_opts)
     run_or_notify(wezterm_runner.run(resolved, wezterm_opts))
   elseif term == "ghostty" then
     run_or_notify(ghostty_runner.run(resolved, ghostty_opts))
+  elseif term == "iterm2" then
+    local iterm2_opts = config.options and config.options.iterm2 or {}
+    if iterm2_opts.enabled ~= false then
+      run_or_notify(iterm2_runner.run(resolved, iterm2_opts))
+    else
+      notify.warn("viewim: iTerm2 backend is disabled (set iterm2.enabled=true)")
+    end
   else
-    notify.error(
-      "viewim: unsupported terminal. Requires kitty, wezterm, or ghostty."
-    )
+    notify.error("viewim: unsupported terminal. Requires kitty, wezterm, ghostty, or iTerm2.")
   end
+end
+
+local function resolve_svg_converter(converter)
+  if converter == "rsvg-convert" then
+    return vim.fn.executable("rsvg-convert") == 1 and "rsvg-convert" or nil
+  elseif converter == "magick" then
+    return vim.fn.executable("magick") == 1 and "magick" or nil
+  end
+  -- auto
+  if vim.fn.executable("rsvg-convert") == 1 then
+    return "rsvg-convert"
+  elseif vim.fn.executable("magick") == 1 then
+    return "magick"
+  end
+  return nil
+end
+
+local function maybe_convert_svg(raw_path, callback)
+  local svg_opts = config.options and config.options.svg or {}
+  local ext = config.get_extension(raw_path)
+  if ext ~= ".svg" or not svg_opts.enabled then
+    return callback(raw_path, nil)
+  end
+
+  local converter = resolve_svg_converter(svg_opts.converter or "auto")
+  if not converter then
+    return callback(nil, "viewim: no SVG converter found (install rsvg-convert or ImageMagick)")
+  end
+
+  local tmp = vim.fn.tempname() .. ".png"
+  local cmd = converter == "rsvg-convert" and { "rsvg-convert", raw_path, "-o", tmp } or { "magick", raw_path, tmp }
+
+  vim.fn.jobstart(cmd, {
+    on_exit = function(_, code)
+      vim.schedule(function()
+        if code ~= 0 then
+          vim.fn.delete(tmp)
+          callback(nil, "viewim: SVG conversion failed (exit " .. code .. ")")
+          return
+        end
+        callback(tmp, nil)
+        vim.defer_fn(function()
+          vim.fn.delete(tmp)
+        end, 30000)
+      end)
+    end,
+  })
 end
 
 local function preview_with_mode(raw_path, mode_opts)
@@ -151,7 +196,11 @@ local function preview_with_mode(raw_path, mode_opts)
 
         local resolved, v_err, level = validate_path(local_path)
         if not resolved then
-          vim.notify(v_err, level or vim.log.levels.ERROR)
+          if level == vim.log.levels.WARN then
+            notify.warn(v_err)
+          else
+            notify.error(v_err)
+          end
           return
         end
 
@@ -167,9 +216,36 @@ local function preview_with_mode(raw_path, mode_opts)
     return
   end
 
+  -- SVG conversion must happen before validate_path (svg is not in supported_extensions)
+  local svg_opts = config.options and config.options.svg or {}
+  local ext = config.get_extension(raw_path)
+  if ext == ".svg" and svg_opts.enabled then
+    maybe_convert_svg(raw_path, function(converted, svg_err)
+      if svg_err then
+        notify.error(svg_err)
+        return
+      end
+      local resolved, v_err, level = validate_path(converted)
+      if not resolved then
+        if level == vim.log.levels.WARN then
+          notify.warn(v_err)
+        else
+          notify.error(v_err)
+        end
+        return
+      end
+      dispatch_preview(resolved, mode_opts)
+    end)
+    return
+  end
+
   local resolved, err, level = validate_path(raw_path)
   if not resolved then
-    vim.notify(err, level or vim.log.levels.ERROR)
+    if level == vim.log.levels.WARN then
+      notify.warn(err)
+    else
+      notify.error(err)
+    end
     return
   end
 

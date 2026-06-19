@@ -32,64 +32,66 @@ function M.open(items, opts)
     end)
   end
 
-  pickers.new({}, {
-    prompt_title = opts.prompt or "SearchImage",
-    finder = finders.new_table({
-      results = items,
-      entry_maker = function(item)
-        local text = item.label or item.path or tostring(item)
-        return {
-          value = item,
-          display = text,
-          ordinal = text,
-        }
-      end,
-    }),
-    sorter = conf.generic_sorter({}),
-    attach_mappings = function(prompt_bufnr, map)
-      actions.select_default:replace(function()
-        local selection = action_state.get_selected_entry()
-        actions.close(prompt_bufnr)
-        if selection and selection.value and type(opts.on_select) == "function" then
-          opts.on_select(selection.value)
-        end
-      end)
-
-      map("i", "<Space>", function()
-        local selection = action_state.get_selected_entry()
-        if selection and selection.value and type(opts.on_alt_select) == "function" then
-          opts.on_alt_select(selection.value)
-        end
-      end)
-
-      map("n", "<Space>", function()
-        local selection = action_state.get_selected_entry()
-        if selection and selection.value and type(opts.on_alt_select) == "function" then
-          opts.on_alt_select(selection.value)
-        end
-      end)
-
-      local function map_change(mode, lhs, move_action)
-        map(mode, lhs, function()
-          move_action(prompt_bufnr)
-          notify_change(prompt_bufnr)
+  pickers
+    .new({}, {
+      prompt_title = opts.prompt or "SearchImage",
+      finder = finders.new_table({
+        results = items,
+        entry_maker = function(item)
+          local text = item.label or item.path or tostring(item)
+          return {
+            value = item,
+            display = text,
+            ordinal = text,
+          }
+        end,
+      }),
+      sorter = conf.generic_sorter({}),
+      attach_mappings = function(prompt_bufnr, map)
+        actions.select_default:replace(function()
+          local selection = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          if selection and selection.value and type(opts.on_select) == "function" then
+            opts.on_select(selection.value)
+          end
         end)
-      end
 
-      map_change("i", "<Down>", actions.move_selection_next)
-      map_change("i", "<Up>", actions.move_selection_previous)
-      map_change("i", "<C-n>", actions.move_selection_next)
-      map_change("i", "<C-p>", actions.move_selection_previous)
-      map_change("n", "j", actions.move_selection_next)
-      map_change("n", "k", actions.move_selection_previous)
-      map_change("n", "<Down>", actions.move_selection_next)
-      map_change("n", "<Up>", actions.move_selection_previous)
+        map("i", "<Space>", function()
+          local selection = action_state.get_selected_entry()
+          if selection and selection.value and type(opts.on_alt_select) == "function" then
+            opts.on_alt_select(selection.value)
+          end
+        end)
 
-      notify_change(prompt_bufnr)
+        map("n", "<Space>", function()
+          local selection = action_state.get_selected_entry()
+          if selection and selection.value and type(opts.on_alt_select) == "function" then
+            opts.on_alt_select(selection.value)
+          end
+        end)
 
-      return true
-    end,
-  }):find()
+        local function map_change(mode, lhs, move_action)
+          map(mode, lhs, function()
+            move_action(prompt_bufnr)
+            notify_change(prompt_bufnr)
+          end)
+        end
+
+        map_change("i", "<Down>", actions.move_selection_next)
+        map_change("i", "<Up>", actions.move_selection_previous)
+        map_change("i", "<C-n>", actions.move_selection_next)
+        map_change("i", "<C-p>", actions.move_selection_previous)
+        map_change("n", "j", actions.move_selection_next)
+        map_change("n", "k", actions.move_selection_previous)
+        map_change("n", "<Down>", actions.move_selection_next)
+        map_change("n", "<Up>", actions.move_selection_previous)
+
+        notify_change(prompt_bufnr)
+
+        return true
+      end,
+    })
+    :find()
 
   return true
 end
