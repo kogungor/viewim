@@ -129,9 +129,12 @@ function M.fetch(source_url, opts, callback)
     on_exit = function(_, code)
       if code ~= 0 then
         vim.fn.delete(target_path)
-        local stderr_msg = table.concat(vim.tbl_filter(function(v)
-          return v and v ~= ""
-        end, stderr_lines), "\n")
+        local stderr_msg = table.concat(
+          vim.tbl_filter(function(v)
+            return v and v ~= ""
+          end, stderr_lines),
+          "\n"
+        )
         local msg = stderr_msg ~= "" and stderr_msg or ("curl exited with code " .. code)
         callback(nil, nil, "viewim: remote download failed: " .. msg)
         return
