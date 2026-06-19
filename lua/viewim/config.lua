@@ -46,14 +46,24 @@
 ---@field quiet_warnings boolean
 ---@field keymap string
 ---@field cursor_keymap string
+---@field force_terminal "kitty"|"wezterm"|"ghostty"|"iterm2"|nil
 ---@field supported_extensions string[]
 ---@field kitty ViewimKittyConfig
 ---@field wezterm ViewimWeztermConfig
 ---@field ghostty ViewimGhosttyConfig
+---@field iterm2 ViewimIterm2Config
 ---@field remote ViewimRemoteConfig
 ---@field search ViewimSearchConfig
 ---@field integrations ViewimIntegrationsConfig
 ---@field experimental ViewimExperimentalConfig
+---@field svg ViewimSvgConfig
+
+---@class ViewimIterm2Config
+---@field enabled boolean
+
+---@class ViewimSvgConfig
+---@field enabled boolean
+---@field converter "auto"|"rsvg-convert"|"magick"
 
 local M = {}
 
@@ -79,12 +89,14 @@ local VALID_SEARCH_PICKERS = {
   auto = true,
   telescope = true,
   snacks = true,
+  fzflua = true,
   builtin = true,
 }
 
 M.defaults = {
   enabled = true,
   quiet_warnings = false,
+  force_terminal = nil,
   keymap = "<leader>p",
   cursor_keymap = "<leader>wi",
   preview_placement = {
@@ -143,6 +155,13 @@ M.defaults = {
     tmux_split_direction = "right",
     tmux_split_percent = nil,
     tmux_command = "kitten icat --hold",
+  },
+  iterm2 = {
+    enabled = true,
+  },
+  svg = {
+    enabled = true,
+    converter = "auto",
   },
   remote = {
     enabled = true,
@@ -461,6 +480,40 @@ local function normalize_experimental(opts)
   return opts
 end
 
+local VALID_TERMINALS = { kitty = true, wezterm = true, ghostty = true, iterm2 = true }
+
+local function normalize_force_terminal(value)
+  if value == nil then
+    return nil
+  end
+  if type(value) == "string" and VALID_TERMINALS[value] then
+    return value
+  end
+  warn("viewim: invalid force_terminal value, ignoring")
+  return nil
+end
+
+local function normalize_iterm2(opts)
+  opts = opts or {}
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = true
+  end
+  return opts
+end
+
+local VALID_SVG_CONVERTERS = { auto = true, ["rsvg-convert"] = true, magick = true }
+
+local function normalize_svg(opts)
+  opts = opts or {}
+  if type(opts.enabled) ~= "boolean" then
+    opts.enabled = true
+  end
+  if type(opts.converter) ~= "string" or not VALID_SVG_CONVERTERS[opts.converter] then
+    opts.converter = "auto"
+  end
+  return opts
+end
+
 ---@param opts ViewimConfig|nil
 function M.setup(opts)
   opts = opts or {}
@@ -480,6 +533,9 @@ function M.setup(opts)
   M.options.kitty = normalize_kitty(M.options.kitty)
   M.options.wezterm = normalize_wezterm(M.options.wezterm)
   M.options.ghostty = normalize_ghostty(M.options.ghostty)
+  M.options.iterm2 = normalize_iterm2(M.options.iterm2)
+  M.options.svg = normalize_svg(M.options.svg)
+  M.options.force_terminal = normalize_force_terminal(M.options.force_terminal)
   M.options.remote = normalize_remote(M.options.remote)
   M.options.search = normalize_search(M.options.search)
 

@@ -405,4 +405,20 @@ function M.search_images(query)
   notify.error("viewim: failed to open image picker" .. (err and (": " .. err) or ""))
 end
 
+--- Clean the remote image cache based on configured size and age limits.
+function M.clean_cache()
+  ensure_config_initialized()
+  local remote = config.options.remote or {}
+  local download = require("viewim.download")
+  download.clean_cache(remote, function(removed, freed_bytes, err)
+    if err then
+      notify.error(err)
+      return
+    end
+    notify.info(
+      string.format("viewim: cache cleaned — %d file(s) removed, %.1f MB freed", removed, freed_bytes / 1048576)
+    )
+  end)
+end
+
 return M
